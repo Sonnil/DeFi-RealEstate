@@ -195,6 +195,12 @@ document.getElementById("a-add").onclick=()=>{
   clearForm();
   }
 };
+// Clear error highlighting as user edits fields
+function clearAdminFieldError(el){ if(!el) return; el.classList.remove('error'); el.removeAttribute('aria-invalid'); const n=document.getElementById('a-notice'); if(n){ n.style.display='none'; n.textContent=''; } }
+["a-address","a-type","a-price","a-cap","a-beds","a-baths","a-sqft","a-raise","a-img","a-desc"].forEach(id=>{
+  const el=document.getElementById(id); if(!el) return; const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+  el.addEventListener(evt, ()=>clearAdminFieldError(el));
+});
 document.getElementById('a-cancel').onclick=exitEdit;
 document.getElementById('a-clear-form').onclick=()=>{ exitEdit(); clearForm(); };
 document.getElementById("a-tbody").addEventListener("click",e=>{
