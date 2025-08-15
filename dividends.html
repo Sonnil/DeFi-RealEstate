@@ -31,6 +31,7 @@
         <button class="secondary" id="div-export" data-i18n="export">Export CSV</button>
         <button class="danger" id="div-clear" data-i18n="clear">Clear</button>
       </div>
+  <p class="help" id="div-msg" aria-live="polite"></p>
       <table class="table" style="margin-top:14px">
         <thead><tr><th data-i18n="t_date">Date</th><th data-i18n="t_amount">Amount</th><th></th></tr></thead>
         <tbody id="div-tbody"></tbody>
@@ -93,14 +94,20 @@ function renderDivTable(){
   document.getElementById("div-total").textContent=formatMoney(total);
   localStorage.setItem("div_rows",JSON.stringify(divRows));
 }
+const divAmtEl=document.getElementById("div-amt");
+const divDateEl=document.getElementById("div-date");
+const divMsg=document.getElementById("div-msg");
+function clearDivErrors(){ [divAmtEl,divDateEl].forEach(el=>{ el.classList.remove('error'); el.removeAttribute('aria-invalid'); }); if(divMsg){ divMsg.textContent=''; } }
+divAmtEl.addEventListener('input', clearDivErrors);
+divDateEl.addEventListener('input', clearDivErrors);
 document.getElementById("div-add").onclick=()=>{
-  const amt=+document.getElementById("div-amt").value||0;
-  const date=document.getElementById("div-date").value||new Date().toISOString().slice(0,10);
-  if(amt<=0)return;
+  const amt=+divAmtEl.value||0;
+  const date=divDateEl.value||new Date().toISOString().slice(0,10);
+  clearDivErrors();
+  if(amt<=0){ divMsg.textContent='Amount must be greater than 0.'; divAmtEl.classList.add('error'); divAmtEl.setAttribute('aria-invalid','true'); divAmtEl.focus(); return; }
   divRows.push({amount:amt,date});
   renderDivTable();
-  document.getElementById("div-amt").value="";
-  document.getElementById("div-date").value="";
+  divAmtEl.value=""; divDateEl.value=""; clearDivErrors();
 };
 document.getElementById("div-export").onclick=()=>{
   const header="Date,Amount\n";
@@ -110,7 +117,7 @@ document.getElementById("div-export").onclick=()=>{
   const a=Object.assign(document.createElement("a"),{href:url,download:"dividends.csv"});
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 };
-document.getElementById("div-clear").onclick=()=>{ if(confirm("Clear all dividends?")){ divRows=[]; renderDivTable(); } };
+document.getElementById("div-clear").onclick=()=>{ if(confirm("Clear all dividends?")){ divRows=[]; renderDivTable(); clearDivErrors(); } };
 document.getElementById("div-tbody").addEventListener("click",e=>{
   const btn=e.target.closest("button[data-action='divdel']"); if(!btn)return;
   const i=+btn.getAttribute("data-index"); divRows.splice(i,1); renderDivTable();

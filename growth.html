@@ -26,6 +26,7 @@
       <div style="display:flex;gap:10px;margin-top:12px">
         <button class="primary" id="g-run" data-i18n="run">Run Forecast</button>
       </div>
+      <p class="help" id="g-msg" aria-live="polite"></p>
       <canvas id="g-chart" height="240" style="margin-top:14px;width:100%"></canvas>
     </div>
     <div class="card">
@@ -46,12 +47,29 @@
 <script>
 injectHeaderFooter("growth");
 function runGrowth(){
-  const price=+document.getElementById("g-price").value||0;
-  const downPct=(+document.getElementById("g-down").value||0)/100;
-  const rate=(+document.getElementById("g-rate").value||0)/100;
-  const term=+document.getElementById("g-term").value||30;
-  const app=(+document.getElementById("g-app").value||0)/100;
-  const extra=+document.getElementById("g-extra").value||0;
+  const priceEl=document.getElementById("g-price");
+  const downEl=document.getElementById("g-down");
+  const rateEl=document.getElementById("g-rate");
+  const termEl=document.getElementById("g-term");
+  const appEl=document.getElementById("g-app");
+  const extraEl=document.getElementById("g-extra");
+  const msg=document.getElementById("g-msg");
+  [priceEl,downEl,rateEl,termEl,appEl,extraEl].forEach(el=>{ el.classList.remove('error'); el.removeAttribute('aria-invalid'); });
+  if(msg) msg.textContent='';
+
+  const price=+priceEl.value||0;
+  const downPct=(+downEl.value||0)/100;
+  const rate=(+rateEl.value||0)/100;
+  const term=+termEl.value||30;
+  const app=(+appEl.value||0)/100;
+  const extra=+extraEl.value||0;
+
+  if(!(price>0)){ msg.textContent='Purchase price must be greater than 0.'; priceEl.classList.add('error'); priceEl.setAttribute('aria-invalid','true'); priceEl.focus(); return; }
+  if(downPct<0 || downPct>=1){ msg.textContent='Down payment must be between 0 and 100.'; downEl.classList.add('error'); downEl.setAttribute('aria-invalid','true'); downEl.focus(); return; }
+  if(rate<0){ msg.textContent='Interest rate cannot be negative.'; rateEl.classList.add('error'); rateEl.setAttribute('aria-invalid','true'); rateEl.focus(); return; }
+  if(!(term>0)){ msg.textContent='Term must be greater than 0 years.'; termEl.classList.add('error'); termEl.setAttribute('aria-invalid','true'); termEl.focus(); return; }
+  if(app<-1){ msg.textContent='Appreciation cannot be less than -100%.'; appEl.classList.add('error'); appEl.setAttribute('aria-invalid','true'); appEl.focus(); return; }
+  if(extra<0){ msg.textContent='Extra principal cannot be negative.'; extraEl.classList.add('error'); extraEl.setAttribute('aria-invalid','true'); extraEl.focus(); return; }
 
   const loan=price*(1-downPct);
   const n=term*12; const r=rate/12;
@@ -82,7 +100,13 @@ function runGrowth(){
   document.getElementById("g-cagr").textContent = (isFinite(cagr)?(cagr*100).toFixed(2):"0")+"%";
   drawLine("g-chart", equities.map(e=>e/1000));
 }
-document.getElementById("g-run").onclick=runGrowth; runGrowth();
+document.getElementById("g-run").onclick=runGrowth;
+["g-price","g-down","g-rate","g-term","g-app","g-extra"].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    const el=document.getElementById(id); el.classList.remove('error'); el.removeAttribute('aria-invalid'); const m=document.getElementById('g-msg'); if(m) m.textContent='';
+  });
+});
+runGrowth();
 </script>
 </body>
 </html>
