@@ -13,7 +13,7 @@
   :root{--bg:#0b0d12;--card:#111623;--text:#e9eef5;--muted:#a9b2c2;--primary:#2e7cf6}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Arial,sans-serif}
   main{padding:16px}
-  .card{background:var(--card);border-radius:12px;padding:20px;overflow:hidden}
+  .card{background:var(--card);border-radius:12px;padding:20px}
   .hero{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}
   .badge{display:inline-block;background:#1b2133;color:#bfe4ff;padding:6px 10px;border-radius:999px;font-size:14px}
   h1{font-size:clamp(28px,4vw,40px);margin:10px 0;line-height:1.2}
@@ -30,8 +30,9 @@
   .hero-img.active{opacity:1}
   .hero-img.is-loaded{filter:blur(0);transform:none}
   @media (max-width:720px){
-    .hero{grid-template-columns:1fr}
+    .hero{grid-template-columns:1fr;align-items:flex-start}
     .hero .illus{display:none}
+    .hero p{max-width:none;word-break:normal;white-space:normal}
     .kpi{flex-direction:column}
     .chip{width:100%;text-align:left}
     main{padding:12px}
@@ -41,6 +42,13 @@
 <link rel="preload" href="assets/style.min.css?v=4" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=4" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="assets/style.min.css?v=4"></noscript>
+<!-- Post-CSS mobile tweaks to keep hero text fully visible and unshortened -->
+<style>
+  @media (max-width:720px){
+    .hero{align-items:flex-start}
+    .hero p{max-width:none;white-space:normal;word-break:normal;overflow:visible;hyphens:manual}
+  }
+</style>
 </head>
 <body>
 
