@@ -22,6 +22,11 @@ button.primary{background:var(--brand);color:#fff;border-color:transparent;curso
 button.secondary{background:#fff;color:var(--brand);border-color:var(--brand);cursor:pointer}
 button.danger{background:var(--danger);color:#fff;border-color:transparent;cursor:pointer}
 button:disabled{opacity:.6;cursor:not-allowed}
+/* Subtle disabled variants for clarity */
+button.primary:disabled, button.secondary:disabled, button.danger:disabled{opacity:1}
+button.primary:disabled{background:#9bb6f3;border-color:transparent;color:#fff}
+button.secondary:disabled{background:#f2f5fb;border-color:#c6d1e4;color:#9aa8bf}
+button.danger:disabled{background:#f7b4b4;border-color:transparent;color:#fff}
 
 main{max-width:1200px;margin:24px auto;padding:0 var(--pad)}
 .grid{display:grid;gap:20px}
