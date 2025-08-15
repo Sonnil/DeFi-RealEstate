@@ -119,12 +119,16 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 @media (max-width: 720px){
   :root{ --pad:12px; --padlg:16px }
   .nav{ padding:10px var(--pad); gap:12px }
-  nav a{ padding:8px 10px }
+  nav a{ padding:8px 10px; font-size:.95rem }
   .card{ padding: var(--pad) }
   .grid{ gap:14px }
   .row, .row-2, .row-4{ gap:10px }
   .table th, .table td{ padding:8px }
   .hero{ padding: clamp(12px, 2vw, 18px) }
+  /* Slightly smaller headings for phones */
+  .hero h1{ font-size: clamp(24px, 5.2vw, 36px) }
+  h2{ font-size:1.15rem }
+  h3{ font-size:1.02rem }
   footer{ margin:28px auto }
   footer .foot{ padding:14px 0 }
 }
