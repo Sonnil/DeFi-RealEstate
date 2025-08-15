@@ -29,9 +29,9 @@
   .icon-btn:hover{color:#fff}
   /* Tooltip bubble */
   .tooltip{position:relative;display:inline-block}
-  .tooltip .tip{position:absolute;z-index:1000;left:50%;transform:translateX(-50%);bottom:125%;background:#0e1526;color:#e9eef5;border:1px solid #2a3550;border-radius:8px;padding:8px 10px;white-space:normal;font-size:12px;line-height:1.3;min-width:180px;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .12s ease,transform .12s ease}
+  .tooltip .tip{position:absolute;z-index:1000;left:50%;transform:translateX(-50%);bottom:125%;background:#0e1526;color:#e9eef5;border:1px solid #2a3550;border-radius:8px;padding:8px 10px;white-space:normal;font-size:12px;line-height:1.3;min-width:180px;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease}
   .tooltip .tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:6px;border-style:solid;border-color:#0e1526 transparent transparent transparent}
-  .tooltip:hover .tip,.tooltip:focus-within .tip{opacity:1;pointer-events:auto;transform:translate(-50%,-2px)}
+  .tooltip:hover .tip,.tooltip:focus-within .tip,.tooltip.show .tip{opacity:1;pointer-events:auto;transform:translate(-50%,-2px)}
   .tooltip .tip [role="heading"]{font-weight:600;margin:0 0 4px}
 </style>
 <link rel="preload" href="assets/style.min.css?v=4" as="style">
@@ -357,6 +357,18 @@ renderAdminTable();
 renderTrashTable();
 // Initialize disabled state on load
 updateAddButtonState();
+
+// Tooltip behavior for keyboard/click accessibility
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest && e.target.closest('.tooltip .icon-btn');
+  if(!btn) return; const wrap = btn.closest('.tooltip'); if(!wrap) return;
+  wrap.classList.add('show'); setTimeout(()=>wrap.classList.remove('show'), 1200);
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter' && e.key !== ' ') return; const el = document.activeElement;
+  if(!el) return; const btn = el.closest && el.closest('.tooltip .icon-btn'); if(!btn) return;
+  const wrap = btn.closest('.tooltip'); if(!wrap) return; wrap.classList.add('show'); setTimeout(()=>wrap.classList.remove('show'), 1200);
+});
 
 // Optional: Google Places Autocomplete for Address
 // To enable, serve with an API key restricted to Places Autocomplete and your domain.

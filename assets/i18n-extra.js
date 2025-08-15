@@ -21,7 +21,7 @@
   t_actions:"Actions",
   // Marketplace/Admin common errors
         err_name_required:"Please enter your name.",
-        err_min_amount:"Minimum is $500.",
+  err_min_amount:"Fully committed — minimum investment is $500.",
         err_exceeds_available:"Exceeds available amount.",
         err_email:"Please enter a valid email.",
         err_phone:"Please enter a valid phone number.",
@@ -103,7 +103,7 @@
   t_actions:"Thao tác",
   // Marketplace/Admin common errors
         err_name_required:"Vui lòng nhập tên.",
-        err_min_amount:"Tối thiểu $500.",
+  err_min_amount:"Đã được phân bổ hết — khoản đầu tư tối thiểu là $500.",
         err_exceeds_available:"Vượt quá số vốn còn mở.",
         err_email:"Vui lòng nhập email hợp lệ.",
         err_phone:"Vui lòng nhập số điện thoại hợp lệ.",
