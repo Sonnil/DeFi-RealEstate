@@ -55,6 +55,14 @@
     .hero-img{transition:none !important}
   }
 </style>
+<!-- Minimal styles for embedded Marketplace preview -->
+<style>
+  .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .form-grid .span-2{grid-column:span 2}
+  @media (max-width:720px){ .form-grid{grid-template-columns:1fr} .form-grid .span-2{grid-column:span 1} }
+  .img-wrap{position:relative}
+  .badge-invested{position:absolute;top:10px;right:10px;background:#10b981;color:#fff;border:1px solid #0ea37f;border-radius:999px;padding:6px 10px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
+</style>
 </head>
 <body>
 
@@ -105,7 +113,50 @@
       </div>
     </div>
   </section>
+  <!-- Embedded Marketplace preview -->
+  <section style="padding:16px">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <h2 style="margin:0" data-i18n="m_title">Marketplace (Demo)</h2>
+          <p class="muted" data-i18n="m_desc">Browse mock listings, open the Invest modal, and propose an allocation (min $500).</p>
+        </div>
+        <a href="marketplace.html"><button class="secondary">View all</button></a>
+      </div>
+    </div>
+    <div class="cards" id="home-cards" style="margin-top:12px"></div>
+  </section>
 </main>
+
+<!-- Invest Modal (shared with preview) -->
+<div class="modal-backdrop" id="mb"></div>
+<div class="modal" id="modal">
+  <div class="panel">
+    <header>
+      <h3 id="mod-title" data-i18n="invest_title">Invest</h3>
+      <button class="secondary" id="mod-close">✕</button>
+    </header>
+    <div id="mod-body">
+      <p class="help" id="mod-help"></p>
+      <div class="form-grid">
+        <div class="field"><label class="req" data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
+        <div class="field"><label class="req" data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
+        <div class="field"><label class="req" data-i18n="inv_email_label">Email</label><input id="inv-email" type="email" placeholder="jane@example.com" autocomplete="email"></div>
+        <div class="field"><label class="req" data-i18n="inv_phone_label">Phone</label><input id="inv-phone" type="tel" inputmode="tel" placeholder="(555) 555-5555" autocomplete="tel"></div>
+        <div class="field"><label data-i18n="cc_name_label">Name on Card</label><input id="cc-name" placeholder="Jane A Doe" autocomplete="cc-name"></div>
+        <div class="field"><label data-i18n="cc_number_label">Card Number</label><input id="cc-number" inputmode="numeric" pattern="[0-9 ]*" placeholder="4242 4242 4242 4242" autocomplete="cc-number"></div>
+        <div class="field"><label data-i18n="cc_exp_label">Expiry (MM/YY)</label><input id="cc-exp" inputmode="numeric" placeholder="MM/YY" autocomplete="cc-exp"></div>
+        <div class="field"><label data-i18n="cc_cvc_label">CVC</label><input id="cc-cvc" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="123" autocomplete="cc-csc"></div>
+        <div class="field span-2"><label data-i18n="cc_zip_label">ZIP/Postal</label><input id="cc-zip" placeholder="90210" autocomplete="postal-code"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="primary" id="inv-submit" data-i18n="invest">Invest</button>
+        <button class="secondary" id="inv-cancel" data-i18n="cancel">Cancel</button>
+      </div>
+      <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite" data-i18n="demo_note">Demo only — no real payment is processed.</p>
+    </div>
+  </div>
+  </div>
 
 
 
@@ -140,6 +191,60 @@
         if(!firstLoaded && ph){ firstLoaded=true; ph.style.opacity='0'; setTimeout(function(){ if(ph&&ph.parentNode){ ph.parentNode.removeChild(ph);} }, 500); }
       }, {once:true});
     });
+  })();
+  // Embedded Marketplace preview logic
+  (function(){
+    function getInvestments(p){ return Array.isArray(p.investments) ? p.investments : []; }
+    function sumCommitted(p){ var inv=getInvestments(p); return inv.length?inv.reduce(function(s,x){return s+((x.status==='approved')?(+x.amount||0):0);},0):0; }
+    function capMax(p){ return Math.max(0, Math.floor((+p.price||0)*0.49)); }
+    function availCap(p){ return Math.max(0, capMax(p)-sumCommitted(p)); }
+    var listings = getMockListings();
+    try{
+      listings = Array.isArray(listings)?listings.map(function(p){ var inv=Array.isArray(p&&p.investments)?p.investments:[]; if(!inv.length){ var c=Object.assign({},p); c.totalRaise=0; return c; } return p; }):listings;
+      if(typeof saveMockListings==='function') saveMockListings(listings);
+    }catch(e){}
+    function renderHomeCards(){
+      var cards=document.getElementById('home-cards'); if(!cards) return; cards.innerHTML='';
+      var lang=localStorage.getItem('lang')||'en'; var tRaise=I18N[lang].raise; var tActual=I18N[lang].t_actual_available||'Actual Available';
+      var arr=(listings||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);}).slice(0,6);
+      arr.forEach(function(p){
+        var el=document.createElement('div'); el.className='property-card';
+        var committed=sumCommitted(p); var avail=availCap(p); var hideInvest=avail<500;
+        el.innerHTML='\n<div class="img-wrap">\n  <img src="'+(p.image||'')+'" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">\n  '+(hideInvest?'<span class="badge-invested" aria-label="100% invested">🎉 100% invested</span>':'')+'\n</div>\n<div class="property-details">\n  <h3>'+p.address+'</h3>\n  <div class="property-meta">\n    <span>'+(p.type||'—')+'</span>\n    <span>🛏 '+(p.beds||0)+'</span>\n    <span>🛁 '+(p.baths||0)+'</span>\n    <span>📐 '+((p.sqft||0).toLocaleString())+' sqft</span>\n    <span>💹 '+((p.capRate??'—'))+'% cap</span>\n  </div>\n  <div class="property-footer">\n    <div>\n      <div style="font-weight:800;display:flex;align-items:center;gap:6px">\n        <span>'+formatMoney(p.price)+'</span>\n      </div>\n      <div class="muted" style="display:flex;align-items:center;gap:6px">\n        <span class="pill">'+tRaise+': '+formatMoney(committed)+'</span>\n      </div>\n      <div class="muted" style="display:flex;align-items:center;gap:6px">\n        <span class="pill">'+tActual+': <strong>'+formatMoney(avail)+'</strong></span>\n      </div>\n    </div>\n    '+(hideInvest?'':'<button class="primary" data-id="'+p.id+'" data-action="invest">'+I18N[lang].invest+'</button>')+'\n  </div>\n</div>';
+        cards.appendChild(el);
+      });
+    }
+    renderHomeCards();
+    var currentListingId=null; var mb=document.getElementById('mb');
+    function openInvest(id){ var p=(listings||[]).find(function(x){return x.id===id;}); if(!p) return; currentListingId=id; var lang=localStorage.getItem('lang')||'en';
+      document.getElementById('mod-title').textContent=(I18N[lang].invest_title||'Invest')+' — '+p.address; var avail=availCap(p);
+      if(avail<=0){ document.getElementById('mod-help').textContent=I18N[lang].fully_invested||'Fully invested'; } else { document.getElementById('mod-help').textContent=formatMoney(avail)+' '+(I18N[lang].available_short||'available'); }
+      document.getElementById('inv-name').value=''; document.getElementById('inv-amount').value=Math.min(500, Math.max(0, avail));
+      var submitBtn=document.getElementById('inv-submit'); submitBtn.disabled=avail<=0; submitBtn.setAttribute('aria-disabled', String(avail<=0));
+      ['inv-email','inv-phone','cc-name','cc-number','cc-exp','cc-cvc','cc-zip'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
+      document.getElementById('inv-msg').textContent=''; openModal('modal','mb'); }
+    function closeInvest(){ closeModal('modal','mb'); }
+    document.getElementById('home-cards').addEventListener('click', function(e){ var btn=e.target.closest&&e.target.closest("button[data-action='invest']"); if(btn){ openInvest(btn.getAttribute('data-id')); }});
+    document.getElementById('mod-close').onclick=closeInvest; document.getElementById('inv-cancel').onclick=closeInvest; mb && (mb.onclick=closeInvest);
+    document.getElementById('inv-submit').onclick=function(){ var vals={ name:document.getElementById('inv-name').value.trim(), amount:+document.getElementById('inv-amount').value||0, email:document.getElementById('inv-email').value.trim(), phone:document.getElementById('inv-phone').value.trim() };
+      var msgEl=document.getElementById('inv-msg'); var lang=localStorage.getItem('lang')||'en'; var fields={ name:document.getElementById('inv-name'), amount:document.getElementById('inv-amount'), email:document.getElementById('inv-email'), phone:document.getElementById('inv-phone') };
+      Object.values(fields).forEach(function(el){ el.classList.remove('error'); el.removeAttribute('aria-invalid'); });
+      function flag(el){ if(!el) return; el.classList.add('error'); el.setAttribute('aria-invalid','true'); el.focus(); }
+      function err(t, el){ if(el) flag(el); msgEl.textContent=t; }
+      if(!vals.name) return err(I18N[lang].err_name_required, fields.name);
+      if(vals.amount<500) return err(I18N[lang].err_min_amount, fields.amount);
+      var idx=(listings||[]).findIndex(function(x){return x.id===currentListingId;}); if(idx<0) return;
+      var availNowAmt=availCap(listings[idx]); if(availNowAmt<=0) return err(I18N[lang].fully_invested||'Fully invested');
+      if(vals.amount>availNowAmt){ var msgTmpl=I18N[lang].err_max_amount_tmpl||'Maximum investment is {max}'; return err(msgTmpl.replace('{max}', formatMoney(availNowAmt)), fields.amount); }
+      var emailOk=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(vals.email); if(!emailOk) return err(I18N[lang].err_email, fields.email);
+      var phoneDigits=onlyDigits(vals.phone); if(phoneDigits.length<7) return err(I18N[lang].err_phone, fields.phone);
+      var p2=listings[idx]; if(!Array.isArray(p2.investments)) p2.investments=[]; p2.investments.unshift({ name:vals.name, email:vals.email, phone:vals.phone, amount:vals.amount, ts:Date.now(), status:'pending' });
+      var committed2=sumCommitted(p2); p2.totalRaise=committed2; if(typeof saveMockListings==='function') saveMockListings(listings);
+      renderHomeCards(); msgEl.textContent=I18N[lang].success_reserved; setTimeout(closeInvest,1100);
+    };
+    document.getElementById('inv-name').addEventListener('input', function(){ var cc=document.getElementById('cc-name'); if(cc && !cc.value) cc.value=this.value; });
+    document.getElementById('cc-number').addEventListener('input', function(e){ e.target.value = formatCardNumber(e.target.value); });
+    document.getElementById('cc-exp').addEventListener('input', function(e){ var s=onlyDigits(e.target.value).slice(0,4); if(s.length>2) s=s.slice(0,2)+'/'+s.slice(2); e.target.value=s; });
   })();
   </script>
 </body>
