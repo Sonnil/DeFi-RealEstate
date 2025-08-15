@@ -1,15 +1,15 @@
 /* Simple offline cache for DeFi-RealEstate demo */
-const STATIC_CACHE = 'dre-static-v20';
+const STATIC_CACHE = 'dre-static-v21';
 const IMG_CACHE = 'dre-img-v1';
 const toURL = (p) => new URL(p, self.location).toString();
 const CORE_ASSETS = [
-  '/index.html?rev=11',
-  '/dividends.html?rev=11',
-  '/growth.html?rev=11',
-  '/marketplace.html?rev=11',
-  '/admin.html?rev=11',
+  '/index.html?rev=12',
+  '/dividends.html?rev=12',
+  '/growth.html?rev=12',
+  '/marketplace.html?rev=12',
+  '/admin.html?rev=12',
   'assets/style.min.css?v=6',
-  'assets/app.min.js?v=6',
+  'assets/app.min.js?v=7',
   'assets/shared.min.js?v=5',
   'assets/i18n-extra.js?v=4'
 ].map(toURL);
@@ -44,7 +44,7 @@ self.addEventListener('fetch', (event) => {
         const copy = res.clone();
         caches.open(STATIC_CACHE).then(c => c.put(req, copy)).catch(()=>{});
         return res;
-  }).catch(() => caches.match(toURL('/index.html?rev=11')))
+  }).catch(() => caches.match(toURL('/index.html?rev=12')))
     );
     return;
   }

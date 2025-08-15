@@ -3,6 +3,11 @@
   try{
     var add = {
       en:{
+  // Overrides to remove demo/mock from titles/descriptions
+        m_title:"Marketplace",
+        m_desc:"Browse listings, open the Invest modal, and propose an allocation (min $500).",
+        a_title:"Admin — Add Property",
+        a_desc:"Add listings. They appear in the Marketplace and are stored locally for this session.",
   // Placeholders and labels
         m_ph_search:"City, address...",
         inv_email_label:"Email",
@@ -12,7 +17,7 @@
         cc_exp_label:"Expiry (MM/YY)",
         cc_cvc_label:"CVC",
         cc_zip_label:"ZIP/Postal",
-        demo_note:"Demo only — no real payment is processed.",
+      demo_note:"No real payment is processed.",
         available_short:"available",
         invest_title:"Invest",
   edit:"Edit",
@@ -106,6 +111,11 @@
       status_approved:"Approved"
       },
       vi:{
+  // Overrides to remove demo/mock from titles/descriptions
+        m_title:"Thị trường",
+        m_desc:"Duyệt danh sách, mở hộp đăng ký đầu tư và đề xuất khoản đầu tư (tối thiểu $500).",
+        a_title:"Quản trị — Thêm dự án",
+        a_desc:"Thêm danh sách. Hiển thị ở Thị trường và lưu cục bộ trong phiên.",
   // Placeholders and labels
         m_ph_search:"Thành phố, địa chỉ...",
         inv_email_label:"Email",
@@ -115,7 +125,7 @@
         cc_exp_label:"Hết hạn (MM/YY)",
         cc_cvc_label:"CVC",
         cc_zip_label:"Mã bưu chính",
-        demo_note:"Chỉ demo — không xử lý thanh toán.",
+      demo_note:"Không xử lý thanh toán.",
         available_short:"còn mở",
         invest_title:"Đầu tư",
   edit:"Sửa",

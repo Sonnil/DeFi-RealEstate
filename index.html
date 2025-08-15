@@ -118,8 +118,8 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <div>
-          <h2 style="margin:0" data-i18n="m_title">Marketplace (Demo)</h2>
-          <p class="muted" data-i18n="m_desc">Browse mock listings, open the Invest modal, and propose an allocation (min $500).</p>
+          <h2 style="margin:0" data-i18n="m_title">Marketplace</h2>
+          <p class="muted" data-i18n="m_desc">Browse listings, open the Invest modal, and propose an allocation (min $500).</p>
         </div>
         <a href="marketplace.html"><button class="secondary">View all</button></a>
       </div>
@@ -153,14 +153,14 @@
         <button class="primary" id="inv-submit" data-i18n="invest">Invest</button>
         <button class="secondary" id="inv-cancel" data-i18n="cancel">Cancel</button>
       </div>
-      <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite" data-i18n="demo_note">Demo only — no real payment is processed.</p>
+  <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite" data-i18n="demo_note">No real payment is processed.</p>
     </div>
   </div>
   </div>
 
 
 
-<script src="assets/app.min.js?v=6"></script>
+<script src="assets/app.min.js?v=7"></script>
 <script src="assets/shared.min.js?v=5"></script>
 <script src="assets/i18n-extra.js?v=4"></script>
 <script>
@@ -203,7 +203,7 @@
       listings = Array.isArray(listings)?listings.map(function(p){ var inv=Array.isArray(p&&p.investments)?p.investments:[]; if(!inv.length){ var c=Object.assign({},p); c.totalRaise=0; return c; } return p; }):listings;
       if(typeof saveMockListings==='function') saveMockListings(listings);
     }catch(e){}
-    function renderHomeCards(){
+  function renderHomeCards(){
       var cards=document.getElementById('home-cards'); if(!cards) return; cards.innerHTML='';
       var lang=localStorage.getItem('lang')||'en'; var tRaise=I18N[lang].raise; var tActual=I18N[lang].t_actual_available||'Actual Available';
       var arr=(listings||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);}).slice(0,6);
@@ -214,7 +214,19 @@
         cards.appendChild(el);
       });
     }
-    renderHomeCards();
+    // Lazy render when the preview section enters the viewport
+    var container = document.getElementById('home-cards');
+    try{
+      if('IntersectionObserver' in window && container){
+        var done=false;
+        var io=new IntersectionObserver(function(entries){
+          entries.forEach(function(ent){
+            if(!done && ent.isIntersecting){ done=true; io.disconnect(); renderHomeCards(); }
+          });
+        }, { root:null, rootMargin:'100px', threshold:0.01 });
+        io.observe(container);
+      } else { renderHomeCards(); }
+    }catch(e){ renderHomeCards(); }
     var currentListingId=null; var mb=document.getElementById('mb');
     function openInvest(id){ var p=(listings||[]).find(function(x){return x.id===id;}); if(!p) return; currentListingId=id; var lang=localStorage.getItem('lang')||'en';
       document.getElementById('mod-title').textContent=(I18N[lang].invest_title||'Invest')+' — '+p.address; var avail=availCap(p);

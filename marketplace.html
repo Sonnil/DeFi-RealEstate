@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>DeFi‑RealEstate — Marketplace</title>
-<meta name="description" content="Browse mock real estate listings and reserve allocations via an accessible invest modal.">
+<meta name="description" content="Browse real estate listings and reserve allocations via an accessible invest modal.">
 <!-- Critical CSS for faster first paint; full stylesheet loads asynchronously -->
 <style>
   /* keep only small page-specific helpers; remove dark theme overrides */
@@ -50,8 +50,8 @@
 
 <main>
   <div class="card">
-    <h2 style="margin-top:0" data-i18n="m_title">Marketplace (Demo)</h2>
-    <p class="muted" data-i18n="m_desc">Browse mock listings, open the Invest modal, and propose an allocation (min $500).</p>
+  <h2 style="margin-top:0" data-i18n="m_title">Marketplace</h2>
+  <p class="muted" data-i18n="m_desc">Browse listings, open the Invest modal, and propose an allocation (min $500).</p>
     <div class="row">
   <div class="field"><label data-i18n="m_search">Search</label><input id="m-search" placeholder="City, address..." data-i18n-placeholder="m_ph_search"></div>
       <div class="field"><label data-i18n="m_type">Type</label>
@@ -100,7 +100,7 @@
         <button class="primary" id="inv-submit" data-i18n="invest">Invest</button>
         <button class="secondary" id="inv-cancel" data-i18n="cancel">Cancel</button>
       </div>
-  <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite" data-i18n="demo_note">Demo only — no real payment is processed.</p>
+  <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite" data-i18n="demo_note">No real payment is processed.</p>
     </div>
   </div>
 </div>
@@ -108,7 +108,7 @@
 
 
 
-<script src="assets/app.min.js?v=6"></script>
+<script src="assets/app.min.js?v=7"></script>
 <script src="assets/shared.min.js?v=5"></script>
 <script src="assets/i18n-extra.js?v=4"></script>
 <script>
@@ -204,7 +204,21 @@ function renderCards(){
     cards.appendChild(el);
   });
 }
-renderCards();
+// Lazy render the grid when it comes into view
+try{
+  const cardsEl=document.getElementById('cards');
+  if('IntersectionObserver' in window && cardsEl){
+    let done=false;
+    const io=new IntersectionObserver((entries)=>{
+      entries.forEach(ent=>{
+        if(!done && ent.isIntersecting){ done=true; io.disconnect(); renderCards(); }
+      });
+    }, { root:null, rootMargin:'150px', threshold:0.01 });
+    io.observe(cardsEl);
+  } else {
+    renderCards();
+  }
+}catch(e){ renderCards(); }
 // Tooltip behavior: toggle .show briefly on click/focus for keyboard users with fade
 document.addEventListener('click', (e)=>{
   const btn = e.target.closest && e.target.closest('.tooltip .icon-btn');

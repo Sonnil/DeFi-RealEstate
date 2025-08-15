@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>DeFi‑RealEstate — Admin</title>
-<meta name="description" content="Admin demo to add and manage mock real estate listings stored locally for the Marketplace page.">
+<meta name="description" content="Admin to add and manage real estate listings stored locally for the Marketplace page.">
 <!-- Critical CSS for quick first paint; full stylesheet loads asynchronously below -->
 <style>
   :root{--bg:#0b0d12;--card:#111623;--text:#e9eef5;--muted:#a9b2c2;--primary:#2e7cf6}
@@ -55,8 +55,8 @@
 
 <main>
   <div class="card">
-    <h2 data-i18n="a_title">Admin — Add Property (Demo)</h2>
-    <p class="muted" data-i18n="a_desc">Add demo listings. They appear in the Marketplace and are stored locally for this session.</p>
+  <h2 data-i18n="a_title">Admin — Add Property</h2>
+  <p class="muted" data-i18n="a_desc">Add listings. They appear in the Marketplace and are stored locally for this session.</p>
     <div style="display:flex;gap:10px;margin-top:12px">
       <button class="primary" id="a-open" data-i18n="add">Add</button>
     </div>
@@ -99,7 +99,7 @@
   <div class="backdrop" id="a-modal-backdrop"></div>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="a-modal-title">
     <div class="hdr">
-      <h3 id="a-modal-title" data-i18n="a_title">Admin — Add Property (Demo)</h3>
+  <h3 id="a-modal-title" data-i18n="a_title">Admin — Update Property</h3>
       <button class="icon-btn close-x" id="a-cancel" aria-label="Close" data-i18n-aria-label="cancel" title="Close">✕</button>
     </div>
     <div class="two-col">
@@ -137,7 +137,7 @@
 
 
 
-<script src="assets/app.min.js?v=6"></script>
+<script src="assets/app.min.js?v=7"></script>
 <script src="assets/shared.min.js?v=5"></script>
 <script src="assets/i18n-extra.js?v=4"></script>
 <script>
@@ -296,11 +296,18 @@ function enterEdit(id){
   editingId = id;
   fillForm(p);
   const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].save;
+  const ttl=document.getElementById('a-modal-title'); if(ttl) ttl.textContent='Admin — Update Property';
   renderAdminTable();
   updateAddButtonState();
   openAdminModal();
 }
-function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].add; renderAdminTable(); clearForm(); updateAddButtonState(); }
+function exitEdit(){
+  editingId=null;
+  const addBtn=document.getElementById('a-add');
+  addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].add;
+  const ttl=document.getElementById('a-modal-title'); if(ttl) ttl.textContent='Admin — Add Property';
+  renderAdminTable(); clearForm(); updateAddButtonState();
+}
 document.getElementById("a-add").onclick=()=>{
   // Validate form and highlight errors
   const fs = {

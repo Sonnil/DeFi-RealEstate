@@ -9,8 +9,8 @@ Pages:
 - index.html (Home)
 - dividends.html (Dividend Tracker + Forecast)
 - growth.html (Property Growth & Equity Forecast)
-- marketplace.html (Zillow-style mock Marketplace + Invest modal)
-- admin.html (Add/Remove demo listings, saved in localStorage)
+- marketplace.html (Marketplace + Invest modal)
+- admin.html (Add/Remove listings, saved in localStorage)
 
 
 Production vs Dev assets
