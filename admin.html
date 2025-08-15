@@ -16,6 +16,14 @@
   button.secondary{background:#1b2133;color:#e9eef5;border:1px solid #2a3550;padding:10px 14px;border-radius:8px;cursor:pointer}
   .table{width:100%;border-collapse:collapse}
   .table th,.table td{padding:8px;border-bottom:1px solid #1f2a44}
+  /* Modal styles */
+  .modal{position:fixed;inset:0;display:none;z-index:10000}
+  .modal.open{display:block}
+  .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+  .modal .panel{position:relative;background:var(--card);border:1px solid #23314d;color:var(--text);width:min(880px,92vw);max-height:90vh;overflow:auto;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);margin:6vh auto;padding:16px}
+  .modal .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:720px){ .two-col{grid-template-columns:1fr} }
   @media (max-width:720px){ main{padding:12px} }
 </style>
 <link rel="preload" href="assets/style.min.css?v=4" as="style">
@@ -30,22 +38,8 @@
   <div class="card">
     <h2 data-i18n="a_title">Admin — Add Property (Demo)</h2>
     <p class="muted" data-i18n="a_desc">Add demo listings. They appear in the Marketplace and are stored locally for this session.</p>
-    <div class="row-4">
-  <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL" autocomplete="street-address" required></div>
-  <div class="field"><label data-i18n="a_type">Type</label><select id="a-type" required><option>Single Family</option><option>Condo</option><option>Townhome</option></select></div>
-  <div class="field"><label data-i18n="a_price">Price ($)</label><input id="a-price" type="number" step="1000" min="0" required></div>
-  <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label><input id="a-cap" type="number" step="0.1" min="0" max="100" value="5.5" required></div>
-  <div class="field"><label data-i18n="a_beds">Beds</label><input id="a-beds" type="number" step="1" min="0" required></div>
-  <div class="field"><label data-i18n="a_baths">Baths</label><input id="a-baths" type="number" step="1" min="0" required></div>
-  <div class="field"><label data-i18n="a_sqft">Sqft</label><input id="a-sqft" type="number" step="50" min="0" required></div>
-  <div class="field"><label data-i18n="a_raise">Total Raise ($)</label><input id="a-raise" type="number" step="1000" min="0" required></div>
-  <div class="field"><label data-i18n="a_img">Image URL</label><input id="a-img" placeholder="https://..." required></div>
-  <div class="field" style="grid-column:span 3"><label data-i18n="a_desc_label">Description</label><input id="a-desc" placeholder="Highlights, neighborhood, upgrades..." required></div>
-    </div>
     <div style="display:flex;gap:10px;margin-top:12px">
-      <button class="primary" id="a-add" data-i18n="add">Add</button>
-      <button class="secondary" id="a-cancel" style="display:none" data-i18n="cancel">Cancel</button>
-  <button class="secondary" id="a-clear-form" data-i18n="a_clear_form" data-i18n-title="a_clear_form" title="Clear Form">Clear Form</button>
+      <button class="primary" id="a-open" data-i18n="add">Add</button>
     </div>
   </div>
 
@@ -70,6 +64,34 @@
     </table>
   </div>
 </main>
+
+
+<!-- Admin Modal: Add/Edit Property -->
+<div id="a-modal" class="modal" aria-hidden="true">
+  <div class="backdrop" id="a-modal-backdrop"></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="a-modal-title">
+    <div class="hdr">
+      <h3 id="a-modal-title" data-i18n="a_title">Admin — Add Property (Demo)</h3>
+      <button class="secondary" id="a-cancel" data-i18n="cancel" aria-label="Close">Cancel</button>
+    </div>
+    <div class="two-col">
+      <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL" autocomplete="street-address" required></div>
+      <div class="field"><label data-i18n="a_type">Type</label><select id="a-type" required><option>Single Family</option><option>Condo</option><option>Townhome</option></select></div>
+      <div class="field"><label data-i18n="a_price">Price ($)</label><input id="a-price" type="number" step="1000" min="0" required></div>
+      <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label><input id="a-cap" type="number" step="0.1" min="0" max="100" value="5.5" required></div>
+      <div class="field"><label data-i18n="a_beds">Beds</label><input id="a-beds" type="number" step="1" min="0" required></div>
+      <div class="field"><label data-i18n="a_baths">Baths</label><input id="a-baths" type="number" step="1" min="0" required></div>
+      <div class="field"><label data-i18n="a_sqft">Sqft</label><input id="a-sqft" type="number" step="50" min="0" required></div>
+      <div class="field"><label data-i18n="a_raise">Total Raise ($)</label><input id="a-raise" type="number" step="1000" min="0" required></div>
+      <div class="field"><label data-i18n="a_img">Image URL</label><input id="a-img" placeholder="https://..." required></div>
+      <div class="field" style="grid-column:span 2"><label data-i18n="a_desc_label">Description</label><input id="a-desc" placeholder="Highlights, neighborhood, upgrades..." required></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;justify-content:flex-end">
+      <button class="secondary" id="a-clear-form" data-i18n="a_clear_form" data-i18n-title="a_clear_form" title="Clear Form">Clear Form</button>
+      <button class="primary" id="a-add" data-i18n="add">Add</button>
+    </div>
+  </div>
+  </div>
 
 
 
@@ -171,6 +193,7 @@ function enterEdit(id){
   const cancelBtn=document.getElementById('a-cancel'); cancelBtn.style.display='inline-block';
   renderAdminTable();
   updateAddButtonState();
+  openAdminModal();
 }
 function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].add; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); updateAddButtonState(); }
 document.getElementById("a-add").onclick=()=>{
@@ -228,7 +251,7 @@ document.getElementById("a-add").onclick=()=>{
     };
   listings[idx]=updated; saveMockListings(listings); renderAdminTable();
   const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
-  exitEdit();
+  closeAdminModal();
   } else {
     const id="P-"+Math.random().toString(36).slice(2,7).toUpperCase();
   const p={id,ts:Date.now(),address:g("a-address"),type:g("a-type"),price,
@@ -238,8 +261,7 @@ document.getElementById("a-add").onclick=()=>{
              description:g("a-desc"),sourceUrl:"#"};
   listings.unshift(p); saveMockListings(listings); renderAdminTable();
   const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
-  clearForm();
-  updateAddButtonState();
+  closeAdminModal();
   }
 };
 // Clear error highlighting as user edits fields
@@ -248,8 +270,13 @@ function clearAdminFieldError(el){ if(!el) return; el.classList.remove('error');
   const el=document.getElementById(id); if(!el) return; const evt = el.tagName === 'SELECT' ? 'change' : 'input';
   el.addEventListener(evt, ()=>{ clearAdminFieldError(el); updateAddButtonState(); });
 });
-document.getElementById('a-cancel').onclick=exitEdit;
-document.getElementById('a-clear-form').onclick=()=>{ exitEdit(); clearForm(); };
+function openAdminModal(){ const m=document.getElementById('a-modal'); if(!m) return; m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; setTimeout(()=>{ const first=document.getElementById('a-address'); if(first) first.focus(); }, 30); }
+function closeAdminModal(){ const m=document.getElementById('a-modal'); if(!m) return; m.classList.remove('open'); m.setAttribute('aria-hidden','true'); document.body.style.overflow=''; exitEdit(); }
+document.getElementById('a-open').onclick=()=>{ exitEdit(); clearForm(); openAdminModal(); };
+document.getElementById('a-cancel').onclick=()=>{ closeAdminModal(); };
+document.getElementById('a-clear-form').onclick=()=>{ clearForm(); updateAddButtonState(); };
+document.getElementById('a-modal-backdrop') && document.getElementById('a-modal-backdrop').addEventListener('click', ()=>{ closeAdminModal(); });
+window.addEventListener('keydown', (e)=>{ const m=document.getElementById('a-modal'); if(e.key==='Escape' && m && m.classList.contains('open')){ closeAdminModal(); }});
 document.getElementById("a-tbody").addEventListener("click",e=>{
   const t = e.target;
   const actBtn = (t && t.closest) ? t.closest("button[data-action]") : (t && t.parentElement && t.parentElement.closest ? t.parentElement.closest("button[data-action]") : null);
