@@ -69,6 +69,27 @@ let editingId = null;
 let trash = JSON.parse(localStorage.getItem('demo_trash')||'[]');
 let lastDeleted = [];
 function saveTrash(){ localStorage.setItem('demo_trash', JSON.stringify(trash)); }
+// Real-time validity check to enable/disable Add/Save
+function isAdminFormValid(){
+  const q = (id)=>{ const el=document.getElementById(id); return el ? el.value : ''; };
+  const addr = (q('a-address')||'').trim(); if(!addr) return false;
+  const typeVal = (q('a-type')||'').trim(); if(!typeVal) return false;
+  const priceVal = +(q('a-price')||0); if(!(priceVal>0)) return false;
+  const capStr = (q('a-cap')||'').trim(); if(capStr==='') return false; const cap = +capStr; if(isNaN(cap)||cap<0||cap>100) return false;
+  const bedsStr = (q('a-beds')||'').trim(); if(bedsStr==='') return false; if(+bedsStr<0) return false;
+  const bathsStr = (q('a-baths')||'').trim(); if(bathsStr==='') return false; if(+bathsStr<0) return false;
+  const sqftStr = (q('a-sqft')||'').trim(); if(sqftStr==='') return false; if(+sqftStr<0) return false;
+  const raiseStr = (q('a-raise')||'').trim(); if(raiseStr==='') return false; if(+raiseStr<=0) return false;
+  const imgStr = (q('a-img')||'').trim(); if(!imgStr) return false; if(!/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')) return false;
+  const descStr = (q('a-desc')||'').trim(); if(!descStr) return false;
+  return true;
+}
+function updateAddButtonState(){
+  const btn = document.getElementById('a-add'); if(!btn) return;
+  const ok = isAdminFormValid();
+  btn.disabled = !ok;
+  btn.setAttribute('aria-disabled', String(!ok));
+}
 function renderAdminTable(){
   const tb=document.getElementById("a-tbody"); tb.innerHTML="";
   listings.forEach(p=>{
@@ -121,6 +142,8 @@ function fillForm(p){
   set('a-raise', p.totalRaise);
   set('a-img', p.image);
   set('a-desc', p.description);
+  // Update button state after programmatic fill
+  updateAddButtonState();
 }
 function clearForm(){ fillForm({address:'',type:'Single Family',price:'',capRate:'',beds:'',baths:'',sqft:'',totalRaise:'',image:'',description:''}); }
 function enterEdit(id){
@@ -130,8 +153,9 @@ function enterEdit(id){
   const addBtn=document.getElementById('a-add'); addBtn.textContent='Save';
   const cancelBtn=document.getElementById('a-cancel'); cancelBtn.style.display='inline-block';
   renderAdminTable();
+  updateAddButtonState();
 }
-function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent='Add'; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); }
+function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent='Add'; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); updateAddButtonState(); }
 document.getElementById("a-add").onclick=()=>{
   // Validate form and highlight errors
   const fs = {
@@ -197,13 +221,14 @@ document.getElementById("a-add").onclick=()=>{
   listings.unshift(p); saveMockListings(listings); renderAdminTable();
   const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
   clearForm();
+  updateAddButtonState();
   }
 };
 // Clear error highlighting as user edits fields
 function clearAdminFieldError(el){ if(!el) return; el.classList.remove('error'); el.removeAttribute('aria-invalid'); const n=document.getElementById('a-notice'); if(n){ n.style.display='none'; n.textContent=''; } }
 ["a-address","a-type","a-price","a-cap","a-beds","a-baths","a-sqft","a-raise","a-img","a-desc"].forEach(id=>{
   const el=document.getElementById(id); if(!el) return; const evt = el.tagName === 'SELECT' ? 'change' : 'input';
-  el.addEventListener(evt, ()=>clearAdminFieldError(el));
+  el.addEventListener(evt, ()=>{ clearAdminFieldError(el); updateAddButtonState(); });
 });
 document.getElementById('a-cancel').onclick=exitEdit;
 document.getElementById('a-clear-form').onclick=()=>{ exitEdit(); clearForm(); };
@@ -262,6 +287,8 @@ document.getElementById('trash-tbody').addEventListener('click', (e)=>{
 });
 renderAdminTable();
 renderTrashTable();
+// Initialize disabled state on load
+updateAddButtonState();
 
 // Optional: Google Places Autocomplete for Address
 // To enable, serve with an API key restricted to Places Autocomplete and your domain.
@@ -295,6 +322,7 @@ renderTrashTable();
           const cityEl = document.getElementById('a-city'); if(cityEl){ cityEl.value = city; clearAdminFieldError && clearAdminFieldError(cityEl); }
           const stateEl = document.getElementById('a-state'); if(stateEl){ stateEl.value = state; clearAdminFieldError && clearAdminFieldError(stateEl); }
           const zipEl = document.getElementById('a-zip'); if(zipEl){ zipEl.value = zip; clearAdminFieldError && clearAdminFieldError(zipEl); }
+          updateAddButtonState && updateAddButtonState();
         }
       });
     }catch(e){ /* fail silently */ }
