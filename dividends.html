@@ -138,7 +138,11 @@ document.getElementById("div-export").onclick=()=>{
 document.getElementById("div-clear").onclick=()=>{ const lang=localStorage.getItem('lang')||'en'; if(confirm(((I18N[lang]&&I18N[lang].div_confirm_clear)||'Clear all dividends?'))){ divRows=[]; renderDivTable(); clearDivErrors(); } };
 document.getElementById("div-tbody").addEventListener("click",e=>{
   const btn=e.target.closest("button[data-action='divdel']"); if(!btn)return;
-  const i=+btn.getAttribute("data-index"); divRows.splice(i,1); renderDivTable();
+  const i=+btn.getAttribute("data-index");
+  const lang=localStorage.getItem('lang')||'en';
+  const msg=(I18N[lang]&&I18N[lang].div_confirm_delete)||'Remove this entry?';
+  if(!confirm(msg)) return;
+  divRows.splice(i,1); renderDivTable();
 });
 
 function runDividendForecast(){
