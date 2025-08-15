@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>DeFi‑RealEstate — Marketplace</title>
 <meta name="description" content="Browse mock real estate listings and reserve allocations via an accessible invest modal.">
-<link rel="stylesheet" href="assets/style.min.css?v=1" />
+<link rel="stylesheet" href="assets/style.min.css?v=2" />
 </head>
 <body>
 
@@ -52,11 +52,22 @@
         <div class="field"><label data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
         <div class="field"><label data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
       </div>
+      <div class="row-2">
+        <div class="field"><label>Email</label><input id="inv-email" type="email" placeholder="jane@example.com" autocomplete="email"></div>
+        <div class="field"><label>Phone</label><input id="inv-phone" type="tel" inputmode="tel" placeholder="(555) 555-5555" autocomplete="tel"></div>
+      </div>
+      <div class="row-4">
+        <div class="field"><label>Name on Card</label><input id="cc-name" placeholder="Jane A Doe" autocomplete="cc-name"></div>
+        <div class="field"><label>Card Number</label><input id="cc-number" inputmode="numeric" pattern="[0-9 ]*" placeholder="4242 4242 4242 4242" autocomplete="cc-number"></div>
+        <div class="field"><label>Expiry (MM/YY)</label><input id="cc-exp" inputmode="numeric" placeholder="MM/YY" autocomplete="cc-exp"></div>
+        <div class="field"><label>CVC</label><input id="cc-cvc" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="123" autocomplete="cc-csc"></div>
+        <div class="field"><label>ZIP/Postal</label><input id="cc-zip" placeholder="90210" autocomplete="postal-code"></div>
+      </div>
       <div style="display:flex;gap:10px;margin-top:12px">
         <button class="primary" id="inv-submit" data-i18n="invest">Invest</button>
         <button class="secondary" id="inv-cancel" data-i18n="cancel">Cancel</button>
       </div>
-      <p class="help" id="inv-msg" style="margin-top:10px"></p>
+      <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite">Demo only — no real payment is processed.</p>
     </div>
   </div>
 </div>
@@ -64,8 +75,8 @@
 
 
 
-<script src="assets/app.min.js?v=1"></script>
-<script src="assets/shared.min.js?v=1"></script>
+<script src="assets/app.min.js?v=2"></script>
+<script src="assets/shared.min.js?v=2"></script>
 <script>
 injectHeaderFooter("market");
 let listings = getMockListings();
@@ -128,6 +139,13 @@ function openInvest(id){
   document.getElementById("mod-help").textContent=`${formatMoney(p.availableRaise)} available`;
   document.getElementById("inv-name").value="";
   document.getElementById("inv-amount").value=500;
+  document.getElementById("inv-email").value="";
+  document.getElementById("inv-phone").value="";
+  document.getElementById("cc-name").value="";
+  document.getElementById("cc-number").value="";
+  document.getElementById("cc-exp").value="";
+  document.getElementById("cc-cvc").value="";
+  document.getElementById("cc-zip").value="";
   document.getElementById("inv-msg").textContent="";
   openModal('modal','mb');
 }
@@ -139,18 +157,76 @@ document.getElementById("mod-close").onclick=closeInvest;
 document.getElementById("inv-cancel").onclick=closeInvest;
 mb.onclick=closeInvest;
 
+// Use shared helpers from assets/shared.min.js: onlyDigits, luhnCheck, validExpiry, formatCardNumber
 document.getElementById("inv-submit").onclick=()=>{
-  const name=document.getElementById("inv-name").value.trim();
-  const amt=+document.getElementById("inv-amount").value||0;
+  const vals = {
+    name: document.getElementById("inv-name").value.trim(),
+    amount: +document.getElementById("inv-amount").value || 0,
+    email: document.getElementById("inv-email").value.trim(),
+    phone: document.getElementById("inv-phone").value.trim(),
+    ccName: document.getElementById("cc-name").value.trim(),
+    ccNumber: document.getElementById("cc-number").value.trim(),
+    ccExp: document.getElementById("cc-exp").value.trim(),
+    ccCvc: document.getElementById("cc-cvc").value.trim(),
+    ccZip: document.getElementById("cc-zip").value.trim()
+  };
+  const msgEl=document.getElementById("inv-msg");
   const lang=localStorage.getItem("lang")||"en";
-  if(!name){ document.getElementById("inv-msg").textContent=(lang==="vi"?"Vui lòng nhập tên.":"Please enter your name."); return; }
-  if(amt<500){ document.getElementById("inv-msg").textContent=(lang==="vi"?"Tối thiểu $500.":"Minimum is $500."); return; }
-  const idx=listings.findIndex(x=>x.id===currentListingId); if(idx<0)return;
-  if(amt>listings[idx].availableRaise){ document.getElementById("inv-msg").textContent=(lang==="vi"?"Vượt quá số vốn còn mở.":"Exceeds available amount."); return; }
-  listings[idx].availableRaise-=amt; saveMockListings(listings); renderCards();
-  document.getElementById("inv-msg").textContent=(lang==="vi"?"Đăng ký thành công!":"Allocation reserved!");
-  setTimeout(closeInvest,900);
+  const fields = {
+    name: document.getElementById('inv-name'),
+    amount: document.getElementById('inv-amount'),
+    email: document.getElementById('inv-email'),
+    phone: document.getElementById('inv-phone'),
+    ccName: document.getElementById('cc-name'),
+    ccNumber: document.getElementById('cc-number'),
+    ccExp: document.getElementById('cc-exp'),
+    ccCvc: document.getElementById('cc-cvc'),
+    ccZip: document.getElementById('cc-zip')
+  };
+  // clear previous error styling
+  Object.values(fields).forEach(el=>{ el.classList.remove('error'); el.removeAttribute('aria-invalid'); });
+  function flag(el){ if(!el) return; el.classList.add('error'); el.setAttribute('aria-invalid','true'); el.focus(); }
+  function err(t, el){ if(el) flag(el); msgEl.textContent=t; }
+
+  if(!vals.name) return err(lang==="vi"?"Vui lòng nhập tên.":"Please enter your name.", fields.name);
+  if(vals.amount < 500) return err(lang==="vi"?"Tối thiểu $500.":"Minimum is $500.", fields.amount);
+  const idx=listings.findIndex(x=>x.id===currentListingId); if(idx<0) return;
+  if(vals.amount > listings[idx].availableRaise) return err(lang==="vi"?"Vượt quá số vốn còn mở.":"Exceeds available amount.", fields.amount);
+  // Contact validation
+  const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(vals.email);
+  if(!emailOk) return err("Please enter a valid email.", fields.email);
+  const phoneDigits = onlyDigits(vals.phone);
+  if(phoneDigits.length < 7) return err("Please enter a valid phone number.", fields.phone);
+  // Card validation (basic)
+  if(!vals.ccName) return err("Please enter name on card.", fields.ccName);
+  if(!luhnCheck(vals.ccNumber)) return err("Card number looks invalid.", fields.ccNumber);
+  if(!validExpiry(vals.ccExp)) return err("Expiry must be MM/YY and not in the past.", fields.ccExp);
+  if(!/^\d{3,4}$/.test(vals.ccCvc)) return err("CVC must be 3–4 digits.", fields.ccCvc);
+  if(vals.ccZip.length < 3) return err("Please enter a valid ZIP/Postal code.", fields.ccZip);
+
+  // Simulate success, no real payment processed
+  listings[idx].availableRaise -= vals.amount;
+  saveMockListings(listings);
+  renderCards();
+  msgEl.textContent = (lang==="vi"?"Đăng ký thành công!":"Allocation reserved! (Demo — no card charged)");
+  setTimeout(closeInvest,1100);
 };
+
+// Prefill Name on Card when typing name (if empty)
+document.getElementById("inv-name").addEventListener('input', function(){
+  const ccNameEl = document.getElementById('cc-name');
+  if(ccNameEl && !ccNameEl.value) ccNameEl.value = this.value;
+});
+
+// Format card number and expiry as the user types
+document.getElementById('cc-number').addEventListener('input', (e)=>{
+  e.target.value = formatCardNumber(e.target.value);
+});
+document.getElementById('cc-exp').addEventListener('input', (e)=>{
+  let s = onlyDigits(e.target.value).slice(0,4);
+  if(s.length > 2) s = s.slice(0,2) + '/' + s.slice(2);
+  e.target.value = s;
+});
 
 ["m-search","m-type","m-beds","m-min","m-max","m-sort"].forEach(id=>{
   document.getElementById(id).addEventListener("input", renderCards);

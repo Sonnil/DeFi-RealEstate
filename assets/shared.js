@@ -9,7 +9,7 @@ function injectHeaderFooter(activePage) {
   const headerHTML = `
 <header>
   <div class="nav">
-    <div class="brand"><div class="logo">DR</div> <span>DeFi‑RealEstate</span></div>
+    <a href="index.html" class="brand" aria-label="Home"><div class="logo">DR</div> <span>DeFi‑RealEstate</span></a>
     <div class="grow"></div>
     <nav role="navigation" aria-label="Primary">
       <a href="index.html" data-page="home" data-i18n="nav_home">Home</a>
@@ -23,7 +23,6 @@ function injectHeaderFooter(activePage) {
         <option value="en">English</option>
         <option value="vi">Tiếng Việt</option>
       </select>
-      <a class="badge" href="marketplace.html" data-page="market">🧪 <span data-i18n="demo_mode">Demo data enabled</span></a>
     </div>
   </div>
 </header>`;
@@ -63,4 +62,21 @@ function closeModal(modalId, backdropId){
   if(!modal||!backdrop) return;
   backdrop.classList.remove('show'); modal.classList.remove('show');
   if(modal.__trapHandler){ document.removeEventListener('keydown', modal.__trapHandler); delete modal.__trapHandler; }
+}
+
+// Shared validation/formatting helpers
+function onlyDigits(s){ try{return (s||"").replace(/\D/g,"");}catch{return "";} }
+function luhnCheck(num){
+  const s = onlyDigits(num); if(!s || s.length<13 || s.length>19) return false;
+  let sum=0, alt=false; for(let i=s.length-1;i>=0;i--){ let n=s.charCodeAt(i)-48; if(n<0||n>9) return false; if(alt){ n*=2; if(n>9)n-=9; } sum+=n; alt=!alt; }
+  return sum%10===0;
+}
+function validExpiry(exp){
+  if(!exp) return false; const m=String(exp).match(/^(\d{2})\s*\/\s*(\d{2}|\d{4})$/); if(!m) return false;
+  let mm=parseInt(m[1],10), yy=parseInt(m[2],10); if(mm<1||mm>12) return false; if(yy<100) yy+=2000;
+  const now=new Date(); const y=now.getFullYear(), mon=now.getMonth()+1;
+  return (yy>y) || (yy===y && mm>=mon);
+}
+function formatCardNumber(val){
+  const s=onlyDigits(val).slice(0,19); return s.replace(/(.{4})/g,'$1 ').trim();
 }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>DeFi‑RealEstate — Admin</title>
 <meta name="description" content="Admin demo to add and manage mock real estate listings stored locally for the Marketplace page.">
-<link rel="stylesheet" href="assets/style.min.css?v=1" />
+<link rel="stylesheet" href="assets/style.min.css?v=2" />
 </head>
 <body>
 
@@ -29,56 +29,190 @@
     </div>
     <div style="display:flex;gap:10px;margin-top:12px">
       <button class="primary" id="a-add" data-i18n="add">Add</button>
-      <button class="danger" id="a-clear" data-i18n="clear">Clear All</button>
+      <button class="secondary" id="a-cancel" style="display:none" data-i18n="cancel">Cancel</button>
+      <button class="secondary" id="a-clear-form" title="Clear form only">Clear Form</button>
     </div>
   </div>
 
   <div class="card">
     <h3 data-i18n="a_current">Current Offerings</h3>
+    <div id="a-notice" class="notice" style="display:none"></div>
     <table class="table">
-      <thead><tr><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th></th></tr></thead>
+      <thead><tr><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th>Actions</th></tr></thead>
       <tbody id="a-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Trash (Deleted)</h3>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button id="trash-restore-all">Restore All</button>
+      <button class="danger" id="trash-empty">Empty Trash</button>
+    </div>
+    <table class="table">
+      <thead><tr><th>Address</th><th>Actions</th></tr></thead>
+      <tbody id="trash-tbody"></tbody>
     </table>
   </div>
 </main>
 
 
 
-<script src="assets/app.min.js?v=1"></script>
-<script src="assets/shared.min.js?v=1"></script>
+
+<script src="assets/app.min.js?v=2"></script>
+<script src="assets/shared.min.js?v=2"></script>
 <script>
 injectHeaderFooter("admin");
 let listings = getMockListings();
+let editingId = null;
+let trash = JSON.parse(localStorage.getItem('demo_trash')||'[]');
+let lastDeleted = [];
+function saveTrash(){ localStorage.setItem('demo_trash', JSON.stringify(trash)); }
 function renderAdminTable(){
   const tb=document.getElementById("a-tbody"); tb.innerHTML="";
   listings.forEach(p=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td><button class="danger" data-id="${p.id}" data-action="remove">Remove</button></td>`;
+    tr.dataset.id = p.id;
+    if (editingId && editingId === p.id) tr.classList.add('editing');
+    const isEditing = editingId && editingId === p.id;
+    const editBtn = isEditing
+      ? `<button data-id="${p.id}" data-action="cancel" title="Cancel edit" aria-label="Cancel edit">✕</button>`
+      : `<button data-id="${p.id}" data-action="edit" title="Edit" aria-label="Edit">✏️</button>`;
+    tr.innerHTML=`<td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\">${editBtn}<button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">Remove</button></td>`;
     tb.appendChild(tr);
   });
 }
+function applyHighlight(){
+  const rows = document.querySelectorAll('#a-tbody tr');
+  rows.forEach(r=>r.classList.remove('editing'));
+  if(editingId){
+    const target = document.querySelector(`#a-tbody tr[data-id="${editingId}"]`);
+    if(target) target.classList.add('editing');
+  }
+}
+function showUndo(message, items){
+  lastDeleted = items || [];
+  const n = document.getElementById('a-notice');
+  n.innerHTML = `${message} <button id="undo-btn">Undo</button>`;
+  n.style.display = 'block';
+  document.getElementById('undo-btn').onclick = ()=>{
+    if(lastDeleted && lastDeleted.length){
+      // Restore to listings; remove from trash by id
+      const ids = new Set(lastDeleted.map(x=>x.id));
+      // Avoid duplicates: filter out any existing with same ids
+      listings = [...lastDeleted.filter(x=>x && x.id), ...listings.filter(x=>!ids.has(x.id))];
+      trash = trash.filter(x=>!ids.has(x.id));
+      saveMockListings(listings); saveTrash();
+      renderAdminTable(); renderTrashTable();
+    }
+    n.style.display = 'none'; lastDeleted = [];
+  };
+}
+function fillForm(p){
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value = v ?? ''};
+  set('a-address', p.address);
+  set('a-type', p.type);
+  set('a-price', p.price);
+  set('a-cap', p.capRate);
+  set('a-beds', p.beds);
+  set('a-baths', p.baths);
+  set('a-sqft', p.sqft);
+  set('a-raise', p.totalRaise);
+  set('a-img', p.image);
+  set('a-desc', p.description);
+}
+function clearForm(){ fillForm({address:'',type:'Single Family',price:'',capRate:'',beds:'',baths:'',sqft:'',totalRaise:'',image:'',description:''}); }
+function enterEdit(id){
+  const p = listings.find(x=>x.id===id); if(!p) return;
+  editingId = id;
+  fillForm(p);
+  const addBtn=document.getElementById('a-add'); addBtn.textContent='Save';
+  const cancelBtn=document.getElementById('a-cancel'); cancelBtn.style.display='inline-block';
+  renderAdminTable();
+}
+function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent='Add'; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); }
 document.getElementById("a-add").onclick=()=>{
   const g=id=>document.getElementById(id).value;
   const price=+g("a-price")||0, raise=+g("a-raise")||0;
-  const id="P-"+Math.random().toString(36).slice(2,7).toUpperCase();
-  const p={id,ts:Date.now(),address:g("a-address"),type:g("a-type"),price,
-           beds:+g("a-beds")||0,baths:+g("a-baths")||0,sqft:+g("a-sqft")||0,
-           capRate:+g("a-cap")||null,totalRaise:raise||Math.round(price*0.3),
-           availableRaise:raise||Math.round(price*0.3),image:g("a-img"),
-           description:g("a-desc"),sourceUrl:"#"};
-  listings.unshift(p); saveMockListings(listings); renderAdminTable();
-  const lang=localStorage.getItem("lang")||"en";
-  alert(lang==="vi"?"Đã thêm dự án demo!":"Added demo listing!");
+  if(editingId){
+    const idx=listings.findIndex(x=>x.id===editingId); if(idx<0) return;
+    let available = listings[idx].availableRaise;
+    const newTotal = raise || Math.round(price*0.3);
+    if(available > newTotal) available = newTotal;
+    const updated={
+      ...listings[idx],
+      address:g('a-address'), type:g('a-type'), price,
+      capRate:+g('a-cap')||null, beds:+g('a-beds')||0, baths:+g('a-baths')||0, sqft:+g('a-sqft')||0,
+      totalRaise:newTotal, availableRaise:available, image:g('a-img'), description:g('a-desc')
+    };
+    listings[idx]=updated; saveMockListings(listings); renderAdminTable(); exitEdit();
+  } else {
+    const id="P-"+Math.random().toString(36).slice(2,7).toUpperCase();
+    const p={id,ts:Date.now(),address:g("a-address"),type:g("a-type"),price,
+             beds:+g("a-beds")||0,baths:+g("a-baths")||0,sqft:+g("a-sqft")||0,
+             capRate:+g("a-cap")||null,totalRaise:raise||Math.round(price*0.3),
+             availableRaise:raise||Math.round(price*0.3),image:g("a-img"),
+             description:g("a-desc"),sourceUrl:"#"};
+    listings.unshift(p); saveMockListings(listings); renderAdminTable(); clearForm();
+  }
 };
-document.getElementById("a-clear").onclick=()=>{
-  if(confirm("Clear all demo listings?")){ listings=[]; saveMockListings(listings); renderAdminTable(); }
-};
+document.getElementById('a-cancel').onclick=exitEdit;
+document.getElementById('a-clear-form').onclick=()=>{ exitEdit(); clearForm(); };
 document.getElementById("a-tbody").addEventListener("click",e=>{
-  const btn=e.target.closest("button[data-action='remove']"); if(!btn)return;
-  const id=btn.getAttribute("data-id");
-  listings=listings.filter(x=>x.id!==id); saveMockListings(listings); renderAdminTable();
+  const t = e.target;
+  const actBtn = (t && t.closest) ? t.closest("button[data-action]") : (t && t.parentElement && t.parentElement.closest ? t.parentElement.closest("button[data-action]") : null);
+  if(!actBtn) return;
+  const id=actBtn.getAttribute("data-id");
+  const action=actBtn.getAttribute("data-action");
+  if(action==='remove'){
+    const it = listings.find(x=>x.id===id);
+    const addr = it && it.address ? it.address : id;
+    const lang = localStorage.getItem('lang') || 'en';
+    const msg = lang==='vi' ? `Xóa dự án này?\n${addr}` : `Remove this listing?\n${addr}`;
+    if(!confirm(msg)) return;
+    if(editingId===id) { exitEdit(); }
+    // Move to trash for recovery
+    if(it){ trash.unshift(it); saveTrash(); showUndo('Listing removed.', [it]); }
+    listings=listings.filter(x=>x.id!==id); saveMockListings(listings); renderAdminTable(); renderTrashTable();
+  } else if(action==='edit'){
+    enterEdit(id);
+  } else if(action==='cancel'){
+    exitEdit();
+  }
+});
+function renderTrashTable(){
+  const tb=document.getElementById('trash-tbody'); if(!tb) return; tb.innerHTML='';
+  trash.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${p.address || p.id}</td><td><button data-id="${p.id}" data-action="restore">Restore</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+document.getElementById('trash-restore-all').onclick=()=>{
+  if(!trash.length) return;
+  listings = [...trash, ...listings];
+  const restoredIds = new Set(trash.map(x=>x.id));
+  // Ensure uniqueness
+  listings = listings.filter((x,i,self)=> x && x.id && self.findIndex(y=>y.id===x.id)===i);
+  trash = []; saveMockListings(listings); saveTrash();
+  renderAdminTable(); renderTrashTable();
+};
+document.getElementById('trash-empty').onclick=()=>{
+  if(!trash.length) return;
+  if(confirm('Empty trash permanently?')){ trash = []; saveTrash(); renderTrashTable(); }
+};
+document.getElementById('trash-tbody').addEventListener('click', (e)=>{
+  const btn = e.target.closest && e.target.closest('button[data-action="restore"]'); if(!btn) return;
+  const id = btn.getAttribute('data-id');
+  const idx = trash.findIndex(x=>x.id===id);
+  if(idx>-1){
+    const item = trash.splice(idx,1)[0];
+    listings.unshift(item); saveMockListings(listings); saveTrash();
+    renderAdminTable(); renderTrashTable();
+  }
 });
 renderAdminTable();
+renderTrashTable();
 </script>
 </body>
 </html>
