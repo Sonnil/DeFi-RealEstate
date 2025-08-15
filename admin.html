@@ -16,7 +16,7 @@
     <h2 data-i18n="a_title">Admin — Add Property (Demo)</h2>
     <p class="muted" data-i18n="a_desc">Add demo listings. They appear in the Marketplace and are stored locally for this session.</p>
     <div class="row-4">
-      <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL"></div>
+  <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL" autocomplete="street-address"></div>
       <div class="field"><label data-i18n="a_type">Type</label><select id="a-type"><option>Single Family</option><option>Condo</option><option>Townhome</option></select></div>
       <div class="field"><label data-i18n="a_price">Price ($)</label><input id="a-price" type="number" step="1000"></div>
       <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label><input id="a-cap" type="number" step="0.1" value="5.5"></div>
@@ -258,6 +258,30 @@ document.getElementById('trash-tbody').addEventListener('click', (e)=>{
 });
 renderAdminTable();
 renderTrashTable();
+
+// Optional: Google Places Autocomplete for Address
+// To enable, serve with an API key restricted to Places Autocomplete and your domain.
+// Add your key below or set window.GOOGLE_PLACES_KEY before this script runs.
+(function(){
+  const KEY = window.GOOGLE_PLACES_KEY || '';
+  if(!KEY) return; // No key provided, skip
+  const s=document.createElement('script');
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(KEY)}&libraries=places&callback=__dreInitPlaces`;
+  s.async=true; s.defer=true; document.head.appendChild(s);
+  window.__dreInitPlaces = function(){
+    const input=document.getElementById('a-address'); if(!input || !window.google || !google.maps || !google.maps.places) return;
+    try{
+      const ac = new google.maps.places.Autocomplete(input, {
+        types: ['address'],
+        fields: ['address_components','formatted_address']
+      });
+      ac.addListener('place_changed', ()=>{
+        const place = ac.getPlace();
+        if(place && place.formatted_address){ input.value = place.formatted_address; clearAdminFieldError && clearAdminFieldError(input); }
+      });
+    }catch(e){ /* fail silently */ }
+  };
+})();
 </script>
 </body>
 </html>
