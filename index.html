@@ -188,20 +188,7 @@
   </div>
   </div>
 
-<!-- Search Results Modal -->
-<div class="modal-backdrop" id="search-mb"></div>
-<div class="modal" id="search-modal">
-  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
-    <header style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <h3 id="search-title">Search Results</h3>
-      <button class="secondary" id="search-close">✕</button>
-    </header>
-    <div id="search-body">
-      <div id="search-results" class="cards"></div>
-      <p id="search-empty" class="muted" style="display:none;margin-top:10px">No properties match your search.</p>
-    </div>
-  </div>
- </div>
+<!-- (removed legacy search results modal; homepage search deep-links to Marketplace) -->
 
 
 
@@ -239,10 +226,7 @@
   })();
   // Embedded Marketplace preview logic
   (function(){
-    function getInvestments(p){ return Array.isArray(p.investments) ? p.investments : []; }
-    function sumCommitted(p){ var inv=getInvestments(p); return inv.length?inv.reduce(function(s,x){return s+((x.status==='approved')?(+x.amount||0):0);},0):0; }
-    function capMax(p){ return Math.max(0, Math.floor((+p.price||0)*0.49)); }
-    function availCap(p){ return Math.max(0, capMax(p)-sumCommitted(p)); }
+  // Use shared helpers from assets/shared.min.js
     var listings = getMockListings();
     try{
       listings = Array.isArray(listings)?listings.map(function(p){ var inv=Array.isArray(p&&p.investments)?p.investments:[]; if(!inv.length){ var c=Object.assign({},p); c.totalRaise=0; return c; } return p; }):listings;
@@ -316,20 +300,6 @@
       });
       return arr;
     }
-    function renderSearchResults(items){
-      var wrap=document.getElementById('search-results'); if(!wrap) return;
-      var empty=document.getElementById('search-empty');
-      wrap.innerHTML='';
-      if(!items || !items.length){ if(empty){ empty.style.display='block'; } return; }
-      if(empty){ empty.style.display='none'; }
-      var lang=localStorage.getItem('lang')||'en'; var tRaise=I18N[lang].raise; var tActual=I18N[lang].t_actual_available||'Actual Available';
-      items.forEach(function(p){
-        var el=document.createElement('div'); el.className='property-card';
-        var committed=sumCommitted(p); var avail=availCap(p); var hideInvest=avail<500;
-        el.innerHTML='\n<div class="img-wrap">\n  <img src="'+(p.image||'')+'" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">\n  '+(hideInvest?'<span class="badge-invested" aria-label="100% invested">🎉 100% invested</span>':'')+'\n</div>\n<div class="property-details">\n  <h3>'+p.address+'</h3>\n  <div class="property-meta">\n    <span>'+(p.type||'—')+'</span>\n    <span>🛏 '+(p.beds||0)+'</span>\n    <span>🛁 '+(p.baths||0)+'</span>\n    <span>📐 '+((p.sqft||0).toLocaleString())+' sqft</span>\n    <span>💹 '+((p.capRate??'—'))+'% cap</span>\n  </div>\n  <div class="property-footer">\n    <div>\n      <div style="font-weight:800;display:flex;align-items:center;gap:6px">\n        <span>'+formatMoney(p.price)+'</span>\n      </div>\n      <div class="muted" style="display:flex;align-items:center;gap:6px">\n        <span class="pill">'+tRaise+': '+formatMoney(committed)+'</span>\n      </div>\n      <div class="muted" style="display:flex;align-items:center;gap:6px">\n        <span class="pill">'+tActual+': <strong>'+formatMoney(avail)+'</strong></span>\n      </div>\n    </div>\n    '+(hideInvest?'':'<button class="primary" data-id="'+p.id+'" data-action="invest">'+I18N[lang].invest+'</button>')+'\n  </div>\n</div>';
-        wrap.appendChild(el);
-      });
-    }
     var searchForm=document.getElementById('home-search-form');
     if(searchForm){
       searchForm.addEventListener('submit', function(ev){ ev.preventDefault();
@@ -350,13 +320,6 @@
       });
     }
   // (hero search removed)
-    var searchWrap=document.getElementById('search-results');
-    if(searchWrap){
-      searchWrap.addEventListener('click', function(e){ var btn=e.target.closest&&e.target.closest("button[data-action='invest']"); if(btn){ closeModal('search-modal','search-mb'); openInvest(btn.getAttribute('data-id')); }});
-    }
-    var searchClose=document.getElementById('search-close'); if(searchClose){ searchClose.onclick=function(){ closeModal('search-modal','search-mb'); }; }
-    var searchMb=document.getElementById('search-mb'); if(searchMb){ searchMb.onclick=function(){ closeModal('search-modal','search-mb'); }; }
-    window.addEventListener('keydown', function(e){ if(e.key==='Escape'){ var m=document.getElementById('search-modal'); if(m && m.classList.contains('open')) closeModal('search-modal','search-mb'); } });
     document.getElementById('mod-close').onclick=closeInvest; document.getElementById('inv-cancel').onclick=closeInvest; mb && (mb.onclick=closeInvest);
   document.getElementById('inv-submit').onclick=function(){ var vals={ name:document.getElementById('inv-name').value.trim(), amount:+document.getElementById('inv-amount').value||0, email:document.getElementById('inv-email').value.trim(), phone:document.getElementById('inv-phone').value.trim() };
       var msgEl=document.getElementById('inv-msg'); var lang=localStorage.getItem('lang')||'en'; var fields={ name:document.getElementById('inv-name'), amount:document.getElementById('inv-amount'), email:document.getElementById('inv-email'), phone:document.getElementById('inv-phone') };

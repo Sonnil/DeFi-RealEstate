@@ -99,3 +99,28 @@ function validExpiry(exp){
 function formatCardNumber(val){
   const s=onlyDigits(val).slice(0,19); return s.replace(/(.{4})/g,'$1 ').trim();
 }
+
+// Shared investment math helpers used across pages (Marketplace, Home preview, Admin)
+function getInvestments(p){ return Array.isArray(p && p.investments) ? p.investments : []; }
+function sumCommitted(p){
+  const inv = getInvestments(p);
+  if(!inv.length) return 0;
+  return inv.reduce((s,x)=> s + ((x && x.status==="approved") ? (+x.amount||0) : 0), 0);
+}
+function capMax(p){ return Math.max(0, Math.floor((+p?.price||0) * 0.49)); }
+function availCap(p){ return Math.max(0, capMax(p) - sumCommitted(p)); }
+
+// One-time tooltip behavior for keyboard/click accessibility (avoid duplicating on each page)
+(function(){
+  if (window.__dreTooltipInit) return; window.__dreTooltipInit = true;
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest && e.target.closest('.tooltip .icon-btn');
+    if(!btn) return; const wrap = btn.closest('.tooltip'); if(!wrap) return;
+    wrap.classList.add('show'); setTimeout(()=>wrap.classList.remove('show'), 1200);
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key !== 'Enter' && e.key !== ' ') return; const el = document.activeElement;
+    if(!el) return; const btn = el.closest && el.closest('.tooltip .icon-btn'); if(!btn) return;
+    const wrap = btn.closest('.tooltip'); if(!wrap) return; wrap.classList.add('show'); setTimeout(()=>wrap.classList.remove('show'), 1200);
+  });
+})();
