@@ -25,6 +25,8 @@
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width:720px){ .two-col{grid-template-columns:1fr} }
   @media (max-width:720px){ main{padding:12px} }
+  .icon-btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 2px}
+  .icon-btn:hover{color:#fff}
 </style>
 <link rel="preload" href="assets/style.min.css?v=4" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=4" media="print" onload="this.media='all'">
@@ -77,8 +79,8 @@
     <div class="two-col">
       <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL" autocomplete="street-address" required></div>
       <div class="field"><label data-i18n="a_type">Type</label><select id="a-type" required><option>Single Family</option><option>Condo</option><option>Townhome</option></select></div>
-      <div class="field"><label data-i18n="a_price">Price ($)</label><input id="a-price" type="number" step="1000" min="0" required></div>
-      <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label><input id="a-cap" type="number" step="0.1" min="0" max="100" value="5.5" required></div>
+  <div class="field"><label data-i18n="a_price">Price ($)</label> <button type="button" class="icon-btn" aria-label="What is Price?" data-i18n-aria-label="info_price_label" title="What is Price?" data-i18n-title="info_price">ℹ️</button><input id="a-price" type="number" step="1000" min="0" required></div>
+  <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label> <button type="button" class="icon-btn" aria-label="What is Cap Rate?" data-i18n-aria-label="info_cap_label" title="What is Cap Rate?" data-i18n-title="info_cap">ℹ️</button><input id="a-cap" type="number" step="0.1" min="0" max="100" value="5.5" required></div>
       <div class="field"><label data-i18n="a_beds">Beds</label><input id="a-beds" type="number" step="1" min="0" required></div>
       <div class="field"><label data-i18n="a_baths">Baths</label><input id="a-baths" type="number" step="1" min="0" required></div>
       <div class="field"><label data-i18n="a_sqft">Sqft</label><input id="a-sqft" type="number" step="50" min="0" required></div>
@@ -98,7 +100,7 @@
 
 <script src="assets/app.min.js?v=6"></script>
 <script src="assets/shared.min.js?v=5"></script>
-<script src="assets/i18n-extra.js?v=1"></script>
+<script src="assets/i18n-extra.js?v=2"></script>
 <script>
 injectHeaderFooter("admin");
 let listings = getMockListings();

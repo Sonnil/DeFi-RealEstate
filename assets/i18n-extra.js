@@ -73,7 +73,12 @@
   // SW update toast
   sw_update_available:"New version available",
   sw_refresh:"Refresh",
-  sw_dismiss:"Dismiss"
+  sw_dismiss:"Dismiss",
+  // Info tooltips
+  info_price_label:"What is Price?",
+  info_price:"The estimated purchase price or offering price for the property.",
+  info_cap_label:"What is Cap Rate?",
+  info_cap:"Cap rate = Net Operating Income (NOI) ÷ Purchase Price. Rough annual yield before financing and taxes."
       },
       vi:{
   // Placeholders and labels
@@ -146,7 +151,12 @@
   // SW update toast
   sw_update_available:"Có phiên bản mới",
   sw_refresh:"Tải lại",
-  sw_dismiss:"Đóng"
+  sw_dismiss:"Đóng",
+  // Info tooltips
+  info_price_label:"Giá là gì?",
+  info_price:"Giá mua ước tính hoặc giá chào bán của bất động sản.",
+  info_cap_label:"Tỷ suất vốn hóa là gì?",
+  info_cap:"Tỷ suất vốn hóa = Thu nhập hoạt động ròng (NOI) ÷ Giá mua. Ước tính lợi suất hàng năm trước tài trợ và thuế."
       }
     };
     if(typeof I18N==='object'){

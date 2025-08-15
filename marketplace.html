@@ -24,6 +24,8 @@
   .row{grid-template-columns:repeat(6,1fr)}
   .row-2{grid-template-columns:repeat(2,1fr)}
   .row-4{grid-template-columns:repeat(4,1fr)}
+  .icon-btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 2px}
+  .icon-btn:hover{color:#fff}
 </style>
 <link rel="preload" href="assets/style.min.css?v=4" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=4" media="print" onload="this.media='all'">
@@ -99,7 +101,7 @@
 
 <script src="assets/app.min.js?v=6"></script>
 <script src="assets/shared.min.js?v=5"></script>
-<script src="assets/i18n-extra.js?v=1"></script>
+<script src="assets/i18n-extra.js?v=2"></script>
 <script>
 injectHeaderFooter("market");
 let listings = getMockListings();
@@ -131,22 +133,29 @@ function renderCards(){
     el.className="property-card";
     el.innerHTML=`
       <img src="${p.image||''}" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">
-      <div class="property-details">
+        <div class="property-details">
         <h3>${p.address}</h3>
         <div class="property-meta">
           <span>${p.type||'—'}</span>
           <span>🛏 ${p.beds||0}</span>
           <span>🛁 ${p.baths||0}</span>
           <span>📐 ${(p.sqft||0).toLocaleString()} sqft</span>
-          <span>💹 ${(p.capRate??'—')}% cap</span>
+          <span>💹 ${(p.capRate??'—')}% cap <button type="button" class="icon-btn" aria-label="What is Cap Rate?" data-i18n-aria-label="info_cap_label" title="What is Cap Rate?" data-i18n-title="info_cap">ℹ️</button></span>
         </div>
         <div class="property-footer">
           <div>
-            <div style="font-weight:800">${formatMoney(p.price)}</div>
-            <div class="muted"><span class="pill">${tRaise}: ${formatMoney(p.totalRaise)}</span></div>
-            <div class="muted"><span class="pill">${tAvail}: <strong>${formatMoney(p.availableRaise)}</strong></span></div>
+            <div style="font-weight:800;display:flex;align-items:center;gap:6px">
+              <span>${formatMoney(p.price)}</span>
+              <button type="button" class="icon-btn" aria-label="What is Price?" data-i18n-aria-label="info_price_label" title="What is Price?" data-i18n-title="info_price" style="font-weight:normal">ℹ️</button>
+            </div>
+            <div class="muted" style="display:flex;align-items:center;gap:6px">
+              <span class="pill">${tRaise}: ${formatMoney(p.totalRaise)}</span>
+            </div>
+            <div class="muted" style="display:flex;align-items:center;gap:6px">
+              <span class="pill">${tAvail}: <strong>${formatMoney(p.availableRaise)}</strong></span>
+            </div>
           </div>
-          <button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>
+            <button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>
         </div>
       </div>`;
     cards.appendChild(el);
