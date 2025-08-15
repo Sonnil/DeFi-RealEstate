@@ -5,8 +5,42 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="description" content="DeFi‑RealEstate: browse fractional real estate deals, track dividends, and forecast growth.">
 <title>DeFi‑RealEstate — Home</title>
+<link rel="preconnect" href="https://cdn.pixabay.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Ctext y='50' font-size='48'%3E🏠%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="assets/style.min.css?v=4" />
+<!-- Critical CSS for first paint; full stylesheet loaded asynchronously below -->
+<style>
+  :root{--bg:#0b0d12;--card:#111623;--text:#e9eef5;--muted:#a9b2c2;--primary:#2e7cf6}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Arial,sans-serif}
+  main{padding:16px}
+  .card{background:var(--card);border-radius:12px;padding:20px;overflow:hidden}
+  .hero{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}
+  .badge{display:inline-block;background:#1b2133;color:#bfe4ff;padding:6px 10px;border-radius:999px;font-size:14px}
+  h1{font-size:clamp(28px,4vw,40px);margin:10px 0;line-height:1.2}
+  p{color:var(--muted);margin:8px 0 12px}
+  .cta{display:flex;gap:10px;flex-wrap:wrap}
+  button.primary{background:var(--primary);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#1b2133;color:#e9eef5;border:1px solid #2a3550;padding:10px 14px;border-radius:8px;cursor:pointer}
+  .kpi{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{background:#121a2b;border:1px solid #1f2a44;color:#cdd7e8;padding:8px 10px;border-radius:999px}
+  .illus{position:relative;border-radius:12px;overflow:hidden;min-height:260px}
+  .illus .ph{position:absolute;inset:0;background:linear-gradient(100deg,#0e1629 20%,#111a2f 40%,#0e1629 60%);background-size:200% 100%;animation:ph 1.2s ease-in-out infinite;transition:opacity .4s ease}
+  @keyframes ph{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.8s ease,filter .6s ease,transform .6s ease;filter:blur(12px);transform:scale(1.02)}
+  .hero-img.active{opacity:1}
+  .hero-img.is-loaded{filter:blur(0);transform:none}
+  @media (max-width:720px){
+    .hero{grid-template-columns:1fr}
+    .hero .illus{display:none}
+    .kpi{flex-direction:column}
+    .chip{width:100%;text-align:left}
+    main{padding:12px}
+  }
+</style>
+<!-- Load full CSS without blocking rendering -->
+<link rel="preload" href="assets/style.min.css?v=4" as="style">
+<link rel="stylesheet" href="assets/style.min.css?v=4" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="assets/style.min.css?v=4"></noscript>
 </head>
 <body>
 
@@ -29,9 +63,18 @@
         </div>
       </div>
       <div class="illus">
-        <img class="hero-img" src="https://cdn.pixabay.com/photo/2023/06/21/06/38/house-8078612_1280.jpg" alt="Real estate investor image" loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
-        <img class="hero-img" src="https://cdn.pixabay.com/photo/2017/01/14/10/56/people-1979261_1280.jpg" alt="Investors discussing property" loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
-      </div>
+        <div class="ph" aria-hidden="true"></div>
+     <img class="hero-img" 
+       src="https://cdn.pixabay.com/photo/2023/06/21/06/38/house-8078612_1280.jpg"
+       srcset="https://cdn.pixabay.com/photo/2023/06/21/06/38/house-8078612_640.jpg 640w, https://cdn.pixabay.com/photo/2023/06/21/06/38/house-8078612_1280.jpg 1280w"
+       sizes="(max-width: 720px) 0px, 50vw"
+       alt="Real estate investor image" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+     <img class="hero-img" 
+       src="https://cdn.pixabay.com/photo/2017/01/14/10/56/people-1979261_1280.jpg"
+       srcset="https://cdn.pixabay.com/photo/2017/01/14/10/56/people-1979261_640.jpg 640w, https://cdn.pixabay.com/photo/2017/01/14/10/56/people-1979261_1280.jpg 1280w"
+       sizes="(max-width: 720px) 0px, 50vw"
+       alt="Investors discussing property" loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+   </div>
     </div>
 
     <div class="grid cols-3" style="margin-top:18px">
@@ -68,6 +111,20 @@
       if(imgs[prev]) imgs[prev].classList.remove('active');
       if(imgs[i]) imgs[i].classList.add('active');
     }, 4000);
+  })();
+  // Blur-up: remove blur once each image has loaded
+  (function(){
+    var imgs=document.querySelectorAll('.hero-img');
+    var ph=document.querySelector('.hero .illus .ph');
+    var firstLoaded=false;
+    imgs.forEach(function(img){
+      function done(){ img.classList.add('is-loaded'); }
+      if(img.complete && img.naturalWidth>0){ done(); }
+      else { img.addEventListener('load', done, {once:true}); }
+      img.addEventListener('load', function(){
+        if(!firstLoaded && ph){ firstLoaded=true; ph.style.opacity='0'; setTimeout(function(){ if(ph&&ph.parentNode){ ph.parentNode.removeChild(ph);} }, 500); }
+      }, {once:true});
+    });
   })();
   </script>
 </body>
