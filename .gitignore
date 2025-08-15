@@ -27,3 +27,6 @@ parcel-cache/
 # Misc
 *.swp
 *.swo
+
+# Local API keys (optional)
+assets/config.js
