@@ -1,5 +1,5 @@
 /* Simple offline cache for DeFi-RealEstate demo */
-const STATIC_CACHE = 'dre-static-v11';
+const STATIC_CACHE = 'dre-static-v12';
 const IMG_CACHE = 'dre-img-v1';
 const toURL = (p) => new URL(p, self.location).toString();
 const CORE_ASSETS = [
@@ -9,7 +9,7 @@ const CORE_ASSETS = [
   '/marketplace.html?rev=4',
   '/admin.html?rev=4',
   'assets/style.min.css?v=4',
-  'assets/app.min.js?v=2',
+  'assets/app.min.js?v=3',
   'assets/shared.min.js?v=5',
   'assets/i18n-extra.js?v=1'
 ].map(toURL);
@@ -24,6 +24,13 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(keys.filter(k => ![STATIC_CACHE, IMG_CACHE].includes(k)).map(k => caches.delete(k)))).then(() => self.clients.claim())
   );
+});
+
+// Allow clients to trigger skipWaiting to activate new SW instantly
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {
