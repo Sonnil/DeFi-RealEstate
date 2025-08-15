@@ -103,21 +103,21 @@ function getMockListings(){
     listings = [
       { id:"P-001", ts:Date.now()-1000*60*60*24*2,
         address:"123 Palm Avenue, Orlando, FL", type:"Single Family", price:420000, beds:3, baths:2, sqft:1850,
-        capRate:5.6, totalRaise:120000, availableRaise:80000,
+  capRate:5.6, totalRaise:120000,
         image:"https://images.unsplash.com/photo-1600585154340-1e4ce9a4c24f?q=80&w=1200&auto=format&fit=crop",
         description:"Beautiful single-family home near Lake Eola with modern kitchen and spacious backyard.",
         sourceUrl:"#"
       },
       { id:"P-002", ts:Date.now()-1000*60*60*24*5,
         address:"88 Ocean Drive, Miami, FL", type:"Condo", price:1250000, beds:4, baths:3, sqft:2800,
-        capRate:6.1, totalRaise:400000, availableRaise:400000,
+  capRate:6.1, totalRaise:400000,
         image:"https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1200&auto=format&fit=crop",
         description:"Luxury beachfront property with stunning ocean views and private pool.",
         sourceUrl:"#"
       },
       { id:"P-003", ts:Date.now()-1000*60*60*20,
         address:"456 Maple Street, Tampa, FL", type:"Single Family", price:350000, beds:3, baths:2, sqft:1600,
-        capRate:5.2, totalRaise:100000, availableRaise:75000,
+  capRate:5.2, totalRaise:100000,
         image:"https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1200&auto=format&fit=crop",
         description:"Charming home in a quiet neighborhood, perfect for families or rental income.",
         sourceUrl:"#"

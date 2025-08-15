@@ -37,12 +37,10 @@
   /* Keep expanded submissions within the card frame */
   .sub-row td{ padding: 0 !important; }
   .sub-box{ margin:8px 0; background:var(--card); border:1px solid #1f2a44; border-radius:10px; padding:10px; font-size: clamp(12px, 1.1vw + 0.5rem, 14px) }
-  .sub-box table{ width:100%; border-collapse:collapse }
-  .sub-box table th, .sub-box table td{ border-bottom:0; padding:6px 8px; vertical-align: top; }
-  /* Allow long email/phone to wrap to avoid pushing amount */
-  .sub-box table td:nth-child(2), .sub-box table td:nth-child(3){ overflow-wrap: anywhere; word-break: break-word; }
-  /* Amount column: tight, right-aligned, no wrap */
-  .sub-box table th:nth-child(4), .sub-box table td:nth-child(4){ white-space: nowrap; text-align: right; width:1%; }
+  .sub-box table{ width:100%; border-collapse:collapse; table-layout: fixed }
+  .sub-box table th, .sub-box table td{ border-bottom:0; padding:6px 8px; vertical-align: top; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Amount column: left-aligned, no wrap */
+  .sub-box table th:nth-child(4), .sub-box table td:nth-child(4){ white-space: nowrap; text-align: left; }
 </style>
 <link rel="preload" href="assets/style.min.css?v=6" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=6" media="print" onload="this.media='all'">
@@ -144,12 +142,14 @@ injectHeaderFooter("admin");
 let listings = getMockListings();
 // Normalize: if a property has no submissions, reset its totalRaise to 0
 try{
-  listings = Array.isArray(listings) ? listings.map(p=>{
-    const inv = Array.isArray(p?.investments) ? p.investments : [];
-    if(!inv.length){ return { ...p, totalRaise: 0 }; }
-    return p;
-  }) : listings;
-  saveMockListings && saveMockListings(listings);
+  if(Array.isArray(listings)){
+    listings = listings.map(function(p){
+      var inv = (p && Array.isArray(p.investments)) ? p.investments : [];
+      if(!inv.length){ var copy = Object.assign({}, p); copy.totalRaise = 0; return copy; }
+      return p;
+    });
+    if(typeof saveMockListings === 'function') saveMockListings(listings);
+  }
 }catch(e){}
 let editingId = null;
 let trash = JSON.parse(localStorage.getItem('demo_trash')||'[]');
@@ -171,6 +171,16 @@ function isAdminFormValid(){
   const descStr = (q('a-desc')||'').trim(); if(!descStr) return false;
   return true;
 }
+// Enable/disable the Add/Save button based on current form validity
+function updateAddButtonState(){
+  try{
+    var btn = document.getElementById('a-add');
+    if(!btn) return;
+    var ok = !!isAdminFormValid();
+    btn.disabled = !ok;
+    btn.setAttribute('aria-disabled', String(!ok));
+  }catch(e){}
+}
 function renderAdminTable(){
   const tb=document.getElementById("a-tbody"); tb.innerHTML="";
   const lang = localStorage.getItem('lang') || 'en';
@@ -188,7 +198,7 @@ function renderAdminTable(){
     const toggle = hasInv ? `<button class="secondary" data-id="${p.id}" data-action="toggle-sub" aria-expanded="false" aria-controls="${subId}">${I18N[lang].submissions_toggle}</button>` : `<span class=\"muted\">${I18N[lang].no_submissions}</span>`;
     const committed = (Array.isArray(p.investments) && p.investments.length)
       ? p.investments.reduce((s,x)=> s + ((x.status==='approved')?(+x.amount||0):0), 0)
-      : ((+p.totalRaise||0) - (+p.availableRaise||0));
+      : 0;
     const capMax = Math.max(0, Math.floor((+p.price||0) * 0.49));
     const actualAvail = Math.max(0, capMax - committed);
     main.innerHTML = `
@@ -208,11 +218,20 @@ function renderAdminTable(){
     if(hasInv){
       box.innerHTML = `
         <table>
+          <colgroup>
+            <col style="width:16.6%">
+            <col style="width:16.6%">
+            <col style="width:16.6%">
+            <col style="width:16.6%">
+            <col style="width:16.6%">
+            <col style="width:8.5%">
+            <col style="width:8.5%">
+          </colgroup>
           <thead>
-            <tr class=\"muted\"><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_name}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_email}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_phone}</th><th style=\"text-align:right;padding:4px 6px\">${I18N[lang].s_amount}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_time}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_status||'Status'}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_actions||'Actions'}</th></tr>
+            <tr class=\"muted\"><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_name}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_email}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_phone}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_amount}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_time}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_status||'Status'}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_actions||'Actions'}</th></tr>
           </thead>
           <tbody>
-            ${invs.map((x,i)=>`<tr data-inv-index=\"${i}\">\n              <td style=\"padding:4px 6px\">${(x.name||'—')}</td>\n              <td style=\"padding:4px 6px\">${(x.email||'—')}</td>\n              <td style=\"padding:4px 6px\">${(x.phone||'—')}</td>\n              <td style=\"padding:4px 6px;text-align:right\">${formatMoney(+x.amount||0)}</td>\n              <td style=\"padding:4px 6px\">${new Date(x.ts||Date.now()).toLocaleString()}</td>\n              <td style=\"padding:4px 6px\">${x.status==='approved' ? (I18N[lang].status_approved||'Approved') : (I18N[lang].status_pending||'Pending')}</td>\n              <td style=\"padding:4px 6px\">${x.status==='approved' ? '' : `<button data-id='${p.id}' data-action='approve' data-index='${i}'>${I18N[lang].approve||'Approve'}</button>`}</td>\n            </tr>`).join('')}
+            ${invs.map((x,i)=>`<tr data-inv-index=\"${i}\">\n              <td title=\"${x.name||''}\" style=\"padding:4px 6px\">${(x.name||'—')}</td>\n              <td title=\"${x.email||''}\" style=\"padding:4px 6px\">${(x.email||'—')}</td>\n              <td title=\"${x.phone||''}\" style=\"padding:4px 6px\">${(x.phone||'—')}</td>\n              <td title=\"${formatMoney(+x.amount||0)}\" style=\"padding:4px 6px\">${formatMoney(+x.amount||0)}</td>\n              <td title=\"${new Date(x.ts||Date.now()).toLocaleString()}\" style=\"padding:4px 6px\">${new Date(x.ts||Date.now()).toLocaleString()}</td>\n              <td title=\"${x.status==='approved' ? (I18N[lang].status_approved||'Approved') : (I18N[lang].status_pending||'Pending')}\" style=\"padding:4px 6px\">${x.status==='approved' ? (I18N[lang].status_approved||'Approved') : (I18N[lang].status_pending||'Pending')}</td>\n              <td style=\"padding:4px 6px\">${x.status==='approved' ? '' : `<button data-id='${p.id}' data-action='approve' data-index='${i}'>${I18N[lang].approve||'Approve'}</button>`}</td>\n            </tr>`).join('')}
           </tbody>
         </table>`;
     } else {
@@ -317,11 +336,6 @@ document.getElementById("a-add").onclick=()=>{
   const raiseStr = (fs.raise?.value||'').trim(); if(raiseStr===''){ aErr(I18N[lang].a_err_raise_required, fs.raise); return; } if(+raiseStr<=0){ aErr(I18N[lang].a_err_raise_gt0, fs.raise); return; }
   const maxRaise = priceVal*0.49;
   if(+raiseStr>maxRaise){ aErr((I18N[lang].a_err_raise_max49||`Total Raise cannot exceed 49% of Price (max ${formatMoney(maxRaise)})`), fs.raise); return; }
-  const availStr = (fs.img && document.getElementById('a-available') ? document.getElementById('a-available').value : (''+''));
-  const availVal = +(availStr||'');
-  if(isNaN(availVal)){ aErr((I18N[lang].a_err_available_required||'Available Raise is required'), document.getElementById('a-available')); return; }
-  if(availVal<0){ aErr((I18N[lang].a_err_available_nonneg||'Available Raise must be ≥ 0'), document.getElementById('a-available')); return; }
-  if(availVal>+raiseStr){ aErr((I18N[lang].a_err_available_lte_raise||'Available Raise cannot exceed Total Raise'), document.getElementById('a-available')); return; }
   const imgStr = (fs.img?.value||'').trim();
   if(!imgStr){ aErr(I18N[lang].a_err_img_required, fs.img); return; }
   if(!/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')){ aErr(I18N[lang].a_err_img_format, fs.img); return; }
@@ -359,7 +373,7 @@ function clearAdminFieldError(el){ if(!el) return; el.classList.remove('error');
   const el=document.getElementById(id); if(!el) return; const evt = el.tagName === 'SELECT' ? 'change' : 'input';
   el.addEventListener(evt, ()=>{ clearAdminFieldError(el); updateAddButtonState(); });
 });
-// Keep business rules in sync while editing: raise <= 49% of price; available in [0, raise]
+// Keep business rules in sync while editing: raise <= 49% of price
 function enforceBusinessRules(){
   const priceEl=document.getElementById('a-price');
   const raiseEl=document.getElementById('a-raise');
