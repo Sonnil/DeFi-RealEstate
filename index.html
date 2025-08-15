@@ -28,7 +28,10 @@
           <div class="chip">🌐 <span data-i18n="kpi_bilingual">English / Vietnamese</span></div>
         </div>
       </div>
-      <div class="illus"></div>
+      <div class="illus">
+        <img class="hero-img" src="https://cdn.pixabay.com/photo/2023/06/21/06/38/house-8078612_1280.jpg" alt="Real estate investor image" loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+        <img class="hero-img" src="https://cdn.pixabay.com/photo/2017/01/14/10/56/people-1979261_1280.jpg" alt="Investors discussing property" loading="lazy" decoding="async" referrerpolicy="no-referrer" crossorigin="anonymous">
+      </div>
     </div>
 
     <div class="grid cols-3" style="margin-top:18px">
@@ -53,6 +56,19 @@
 <script src="assets/app.min.js?v=2"></script>
 <script src="assets/shared.min.js?v=4"></script>
 <script src="assets/i18n-extra.js?v=1"></script>
-<script>injectHeaderFooter("home");</script>
+<script>
+  injectHeaderFooter("home");
+  // Simple hero carousel: rotate images every 4s
+  (function(){
+    var imgs=document.querySelectorAll('.hero .illus .hero-img');
+    if(!imgs||imgs.length<2) return;
+    var i=0; imgs.forEach(function(img,idx){ img.classList.toggle('active', idx===0); });
+    setInterval(function(){
+      var prev=i; i=(i+1)%imgs.length;
+      if(imgs[prev]) imgs[prev].classList.remove('active');
+      if(imgs[i]) imgs[i].classList.add('active');
+    }, 4000);
+  })();
+  </script>
 </body>
 </html>

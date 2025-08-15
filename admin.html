@@ -38,7 +38,7 @@
     <h3 data-i18n="a_current">Current Offerings</h3>
     <div id="a-notice" class="notice" style="display:none"></div>
     <table class="table">
-      <thead><tr><th class="row-action" aria-label="Edit"></th><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th>Actions</th></tr></thead>
+  <thead><tr><th class="row-action" data-i18n-aria-label="edit"></th><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th data-i18n="t_actions">Actions</th></tr></thead>
       <tbody id="a-tbody"></tbody>
     </table>
   </div>
@@ -50,7 +50,7 @@
   <button class="danger" id="trash-empty" data-i18n="trash_empty">Empty Trash</button>
     </div>
     <table class="table">
-      <thead><tr><th>Address</th><th>Actions</th></tr></thead>
+  <thead><tr><th data-i18n="t_address">Address</th><th data-i18n="t_actions">Actions</th></tr></thead>
       <tbody id="trash-tbody"></tbody>
     </table>
   </div>
@@ -98,10 +98,11 @@ function renderAdminTable(){
     tr.dataset.id = p.id;
     if (editingId && editingId === p.id) tr.classList.add('editing');
     const isEditing = editingId && editingId === p.id;
-      const editBtn = isEditing
-        ? `<button data-id="${p.id}" data-action="cancel" title="Cancel edit" aria-label="Cancel edit">\u2715</button>`
-        : `<button data-id="${p.id}" data-action="edit" title="Edit" aria-label="Edit" class="icon-btn">\u270f\ufe0f</button>`;
-  tr.innerHTML=`<td class=\"row-action\">${editBtn}</td><td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\"><button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">Remove</button></td>`;
+  const lang = localStorage.getItem('lang') || 'en';
+  const editBtn = isEditing
+    ? `<button data-id="${p.id}" data-action="cancel" title="${I18N[lang].cancel_edit}" aria-label="${I18N[lang].cancel_edit}">\u2715</button>`
+    : `<button data-id="${p.id}" data-action="edit" title="${I18N[lang].edit}" aria-label="${I18N[lang].edit}" class="icon-btn">\u270f\ufe0f</button>`;
+  tr.innerHTML=`<td class=\"row-action\">${editBtn}</td><td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\"><button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">${I18N[lang].remove}</button></td>`;
     tb.appendChild(tr);
   });
 }
@@ -116,7 +117,8 @@ function applyHighlight(){
 function showUndo(message, items){
   lastDeleted = items || [];
   const n = document.getElementById('a-notice');
-  n.innerHTML = `${message} <button id="undo-btn">Undo</button>`;
+  const lang = localStorage.getItem('lang') || 'en';
+  n.innerHTML = `${message} <button id="undo-btn">${I18N[lang].undo}</button>`;
   n.style.display = 'block';
   document.getElementById('undo-btn').onclick = ()=>{
     if(lastDeleted && lastDeleted.length){
@@ -151,12 +153,12 @@ function enterEdit(id){
   const p = listings.find(x=>x.id===id); if(!p) return;
   editingId = id;
   fillForm(p);
-  const addBtn=document.getElementById('a-add'); addBtn.textContent='Save';
+  const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].save;
   const cancelBtn=document.getElementById('a-cancel'); cancelBtn.style.display='inline-block';
   renderAdminTable();
   updateAddButtonState();
 }
-function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent='Add'; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); updateAddButtonState(); }
+function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].add; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); updateAddButtonState(); }
 document.getElementById("a-add").onclick=()=>{
   // Validate form and highlight errors
   const fs = {
@@ -178,23 +180,24 @@ document.getElementById("a-add").onclick=()=>{
     if(el){ el.classList.add('error'); el.setAttribute('aria-invalid','true'); el.focus(); }
     return;
   }
+  const lang = localStorage.getItem('lang') || 'en';
   const addr = (fs.address?.value||'').trim();
-  if(!addr){ aErr('Please enter an address.', fs.address); return; }
+  if(!addr){ aErr(I18N[lang].a_err_address_required, fs.address); return; }
   const typeVal = (fs.type?.value||'').trim();
-  if(!typeVal){ aErr('Please select a type.', fs.type); return; }
+  if(!typeVal){ aErr(I18N[lang].a_err_type_required, fs.type); return; }
   const priceVal = +((fs.price?.value)||0);
-  if(!(priceVal>0)){ aErr('Price must be greater than 0.', fs.price); return; }
+  if(!(priceVal>0)){ aErr(I18N[lang].a_err_price_gt0, fs.price); return; }
   const capStr = (fs.cap?.value||'').trim();
-  if(capStr===''){ aErr('Cap Rate is required.', fs.cap); return; }
-  if(isNaN(+capStr) || +capStr<0 || +capStr>100){ aErr('Cap Rate must be between 0 and 100.', fs.cap); return; }
-  const bedsStr = (fs.beds?.value||'').trim(); if(bedsStr===''){ aErr('Beds is required.', fs.beds); return; } if(+bedsStr<0){ aErr('Beds cannot be negative.', fs.beds); return; }
-  const bathsStr = (fs.baths?.value||'').trim(); if(bathsStr===''){ aErr('Baths is required.', fs.baths); return; } if(+bathsStr<0){ aErr('Baths cannot be negative.', fs.baths); return; }
-  const sqftStr = (fs.sqft?.value||'').trim(); if(sqftStr===''){ aErr('Sqft is required.', fs.sqft); return; } if(+sqftStr<0){ aErr('Sqft cannot be negative.', fs.sqft); return; }
-  const raiseStr = (fs.raise?.value||'').trim(); if(raiseStr===''){ aErr('Total Raise is required.', fs.raise); return; } if(+raiseStr<=0){ aErr('Total Raise must be greater than 0.', fs.raise); return; }
+  if(capStr===''){ aErr(I18N[lang].a_err_cap_required, fs.cap); return; }
+  if(isNaN(+capStr) || +capStr<0 || +capStr>100){ aErr(I18N[lang].a_err_cap_range, fs.cap); return; }
+  const bedsStr = (fs.beds?.value||'').trim(); if(bedsStr===''){ aErr(I18N[lang].a_err_beds_required, fs.beds); return; } if(+bedsStr<0){ aErr(I18N[lang].a_err_beds_nonneg, fs.beds); return; }
+  const bathsStr = (fs.baths?.value||'').trim(); if(bathsStr===''){ aErr(I18N[lang].a_err_baths_required, fs.baths); return; } if(+bathsStr<0){ aErr(I18N[lang].a_err_baths_nonneg, fs.baths); return; }
+  const sqftStr = (fs.sqft?.value||'').trim(); if(sqftStr===''){ aErr(I18N[lang].a_err_sqft_required, fs.sqft); return; } if(+sqftStr<0){ aErr(I18N[lang].a_err_sqft_nonneg, fs.sqft); return; }
+  const raiseStr = (fs.raise?.value||'').trim(); if(raiseStr===''){ aErr(I18N[lang].a_err_raise_required, fs.raise); return; } if(+raiseStr<=0){ aErr(I18N[lang].a_err_raise_gt0, fs.raise); return; }
   const imgStr = (fs.img?.value||'').trim();
-  if(!imgStr){ aErr('Image URL is required.', fs.img); return; }
-  if(!/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')){ aErr('Image URL must start with http(s) or be a data URL.', fs.img); return; }
-  const descStr = (fs.desc?.value||'').trim(); if(!descStr){ aErr('Description is required.', fs.desc); return; }
+  if(!imgStr){ aErr(I18N[lang].a_err_img_required, fs.img); return; }
+  if(!/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')){ aErr(I18N[lang].a_err_img_format, fs.img); return; }
+  const descStr = (fs.desc?.value||'').trim(); if(!descStr){ aErr(I18N[lang].a_err_desc_required, fs.desc); return; }
 
   const g=id=>document.getElementById(id).value;
   const price=priceVal, raise=+(raiseStr||0);
@@ -243,11 +246,12 @@ document.getElementById("a-tbody").addEventListener("click",e=>{
     const it = listings.find(x=>x.id===id);
     const addr = it && it.address ? it.address : id;
     const lang = localStorage.getItem('lang') || 'en';
-    const msg = lang==='vi' ? `Xóa dự án này?\n${addr}` : `Remove this listing?\n${addr}`;
+    const tmpl = I18N[lang] && I18N[lang].a_confirm_remove ? I18N[lang].a_confirm_remove : 'Remove this listing?\n{addr}';
+    const msg = tmpl.replace('{addr}', addr);
     if(!confirm(msg)) return;
     if(editingId===id) { exitEdit(); }
     // Move to trash for recovery
-    if(it){ trash.unshift(it); saveTrash(); showUndo('Listing removed.', [it]); }
+  if(it){ trash.unshift(it); saveTrash(); showUndo(I18N[(localStorage.getItem('lang')||'en')].listing_removed, [it]); }
     listings=listings.filter(x=>x.id!==id); saveMockListings(listings); renderAdminTable(); renderTrashTable();
   } else if(action==='edit'){
     enterEdit(id);
@@ -259,7 +263,8 @@ function renderTrashTable(){
   const tb=document.getElementById('trash-tbody'); if(!tb) return; tb.innerHTML='';
   trash.forEach(p=>{
     const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${p.address || p.id}</td><td><button data-id="${p.id}" data-action="restore">Restore</button></td>`;
+    const lang = localStorage.getItem('lang') || 'en';
+    tr.innerHTML = `<td>${p.address || p.id}</td><td><button data-id="${p.id}" data-action="restore">${I18N[lang].trash_restore}</button></td>`;
     tb.appendChild(tr);
   });
 }
@@ -274,7 +279,8 @@ document.getElementById('trash-restore-all').onclick=()=>{
 };
 document.getElementById('trash-empty').onclick=()=>{
   if(!trash.length) return;
-  if(confirm('Empty trash permanently?')){ trash = []; saveTrash(); renderTrashTable(); }
+  const lang2 = localStorage.getItem('lang') || 'en';
+  if(confirm(I18N[lang2].trash_empty_confirm)){ trash = []; saveTrash(); renderTrashTable(); }
 };
 document.getElementById('trash-tbody').addEventListener('click', (e)=>{
   const btn = e.target.closest && e.target.closest('button[data-action="restore"]'); if(!btn) return;

@@ -16,7 +16,7 @@
     <h2 style="margin-top:0" data-i18n="m_title">Marketplace (Demo)</h2>
     <p class="muted" data-i18n="m_desc">Browse mock listings, open the Invest modal, and propose an allocation (min $500).</p>
     <div class="row">
-      <div class="field"><label data-i18n="m_search">Search</label><input id="m-search" placeholder="City, address..."></div>
+  <div class="field"><label data-i18n="m_search">Search</label><input id="m-search" placeholder="City, address..." data-i18n-placeholder="m_ph_search"></div>
       <div class="field"><label data-i18n="m_type">Type</label>
         <select id="m-type">
           <option value="" data-i18n="any">Any</option>
@@ -43,31 +43,31 @@
 <div class="modal" id="modal">
   <div class="panel">
     <header>
-      <h3 id="mod-title">Invest</h3>
+  <h3 id="mod-title" data-i18n="invest_title">Invest</h3>
       <button class="secondary" id="mod-close">✕</button>
     </header>
     <div id="mod-body">
-      <p class="help" id="mod-help"></p>
+  <p class="help" id="mod-help"></p>
       <div class="row-2">
-        <div class="field"><label data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
-        <div class="field"><label data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
+  <div class="field"><label data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
+  <div class="field"><label data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
       </div>
       <div class="row-2">
-        <div class="field"><label>Email</label><input id="inv-email" type="email" placeholder="jane@example.com" autocomplete="email"></div>
-        <div class="field"><label>Phone</label><input id="inv-phone" type="tel" inputmode="tel" placeholder="(555) 555-5555" autocomplete="tel"></div>
+  <div class="field"><label data-i18n="inv_email_label">Email</label><input id="inv-email" type="email" placeholder="jane@example.com" autocomplete="email"></div>
+  <div class="field"><label data-i18n="inv_phone_label">Phone</label><input id="inv-phone" type="tel" inputmode="tel" placeholder="(555) 555-5555" autocomplete="tel"></div>
       </div>
       <div class="row-4">
-        <div class="field"><label>Name on Card</label><input id="cc-name" placeholder="Jane A Doe" autocomplete="cc-name"></div>
-        <div class="field"><label>Card Number</label><input id="cc-number" inputmode="numeric" pattern="[0-9 ]*" placeholder="4242 4242 4242 4242" autocomplete="cc-number"></div>
-        <div class="field"><label>Expiry (MM/YY)</label><input id="cc-exp" inputmode="numeric" placeholder="MM/YY" autocomplete="cc-exp"></div>
-        <div class="field"><label>CVC</label><input id="cc-cvc" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="123" autocomplete="cc-csc"></div>
-        <div class="field"><label>ZIP/Postal</label><input id="cc-zip" placeholder="90210" autocomplete="postal-code"></div>
+  <div class="field"><label data-i18n="cc_name_label">Name on Card</label><input id="cc-name" placeholder="Jane A Doe" autocomplete="cc-name"></div>
+  <div class="field"><label data-i18n="cc_number_label">Card Number</label><input id="cc-number" inputmode="numeric" pattern="[0-9 ]*" placeholder="4242 4242 4242 4242" autocomplete="cc-number"></div>
+  <div class="field"><label data-i18n="cc_exp_label">Expiry (MM/YY)</label><input id="cc-exp" inputmode="numeric" placeholder="MM/YY" autocomplete="cc-exp"></div>
+  <div class="field"><label data-i18n="cc_cvc_label">CVC</label><input id="cc-cvc" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="123" autocomplete="cc-csc"></div>
+  <div class="field"><label data-i18n="cc_zip_label">ZIP/Postal</label><input id="cc-zip" placeholder="90210" autocomplete="postal-code"></div>
       </div>
       <div style="display:flex;gap:10px;margin-top:12px">
         <button class="primary" id="inv-submit" data-i18n="invest">Invest</button>
         <button class="secondary" id="inv-cancel" data-i18n="cancel">Cancel</button>
       </div>
-      <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite">Demo only — no real payment is processed.</p>
+  <p class="help" id="inv-msg" style="margin-top:10px" aria-live="polite" data-i18n="demo_note">Demo only — no real payment is processed.</p>
     </div>
   </div>
 </div>
@@ -136,8 +136,9 @@ let currentListingId=null; const mb=document.getElementById("mb"), modal=documen
 function openInvest(id){
   const p=listings.find(x=>x.id===id); if(!p)return;
   currentListingId=id;
-  document.getElementById("mod-title").textContent=`Invest — ${p.address}`;
-  document.getElementById("mod-help").textContent=`${formatMoney(p.availableRaise)} available`;
+  const lang=localStorage.getItem('lang')||'en';
+  document.getElementById("mod-title").textContent=`${I18N[lang].invest_title} — ${p.address}`;
+  document.getElementById("mod-help").textContent=`${formatMoney(p.availableRaise)} ${I18N[lang].available_short}`;
   document.getElementById("inv-name").value="";
   document.getElementById("inv-amount").value=500;
   document.getElementById("inv-email").value="";
@@ -189,27 +190,27 @@ document.getElementById("inv-submit").onclick=()=>{
   function flag(el){ if(!el) return; el.classList.add('error'); el.setAttribute('aria-invalid','true'); el.focus(); }
   function err(t, el){ if(el) flag(el); msgEl.textContent=t; }
 
-  if(!vals.name) return err(lang==="vi"?"Vui lòng nhập tên.":"Please enter your name.", fields.name);
-  if(vals.amount < 500) return err(lang==="vi"?"Tối thiểu $500.":"Minimum is $500.", fields.amount);
+  if(!vals.name) return err(I18N[lang].err_name_required, fields.name);
+  if(vals.amount < 500) return err(I18N[lang].err_min_amount, fields.amount);
   const idx=listings.findIndex(x=>x.id===currentListingId); if(idx<0) return;
-  if(vals.amount > listings[idx].availableRaise) return err(lang==="vi"?"Vượt quá số vốn còn mở.":"Exceeds available amount.", fields.amount);
+  if(vals.amount > listings[idx].availableRaise) return err(I18N[lang].err_exceeds_available, fields.amount);
   // Contact validation
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(vals.email);
-  if(!emailOk) return err("Please enter a valid email.", fields.email);
+  if(!emailOk) return err(I18N[lang].err_email, fields.email);
   const phoneDigits = onlyDigits(vals.phone);
-  if(phoneDigits.length < 7) return err("Please enter a valid phone number.", fields.phone);
+  if(phoneDigits.length < 7) return err(I18N[lang].err_phone, fields.phone);
   // Card validation (basic)
-  if(!vals.ccName) return err("Please enter name on card.", fields.ccName);
-  if(!luhnCheck(vals.ccNumber)) return err("Card number looks invalid.", fields.ccNumber);
-  if(!validExpiry(vals.ccExp)) return err("Expiry must be MM/YY and not in the past.", fields.ccExp);
-  if(!/^\d{3,4}$/.test(vals.ccCvc)) return err("CVC must be 3–4 digits.", fields.ccCvc);
-  if(vals.ccZip.length < 3) return err("Please enter a valid ZIP/Postal code.", fields.ccZip);
+  if(!vals.ccName) return err(I18N[lang].err_cc_name, fields.ccName);
+  if(!luhnCheck(vals.ccNumber)) return err(I18N[lang].err_cc_number, fields.ccNumber);
+  if(!validExpiry(vals.ccExp)) return err(I18N[lang].err_cc_exp, fields.ccExp);
+  if(!/^\d{3,4}$/.test(vals.ccCvc)) return err(I18N[lang].err_cc_cvc, fields.ccCvc);
+  if(vals.ccZip.length < 3) return err(I18N[lang].err_cc_zip, fields.ccZip);
 
   // Simulate success, no real payment processed
   listings[idx].availableRaise -= vals.amount;
   saveMockListings(listings);
   renderCards();
-  msgEl.textContent = (lang==="vi"?"Đăng ký thành công!":"Allocation reserved! (Demo — no card charged)");
+  msgEl.textContent = I18N[lang].success_reserved;
   setTimeout(closeInvest,1100);
 };
 
