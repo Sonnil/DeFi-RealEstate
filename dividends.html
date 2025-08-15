@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DeFi‑RealEstate — Dividend Tracker</title>
+<meta name="description" content="Track dividend payouts and forecast income over time with reinvestment options.">
+<link rel="stylesheet" href="assets/style.min.css?v=1" />
+</head>
+<body>
+
+
+
+<main>
+  <div class="grid cols-2">
+    <div class="card">
+      <h2 data-i18n="div_title">Dividend Tracker</h2>
+      <p class="muted" data-i18n="div_desc">Log your payouts and forecast future income.</p>
+      <div class="row-2">
+        <div class="field">
+          <label data-i18n="div_amount">Amount ($)</label>
+          <input id="div-amt" type="number" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label data-i18n="div_date">Date</label>
+          <input id="div-date" type="date">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="primary" id="div-add" data-i18n="add">Add</button>
+        <button class="secondary" id="div-export" data-i18n="export">Export CSV</button>
+        <button class="danger" id="div-clear" data-i18n="clear">Clear</button>
+      </div>
+      <table class="table" style="margin-top:14px">
+        <thead><tr><th data-i18n="t_date">Date</th><th data-i18n="t_amount">Amount</th><th></th></tr></thead>
+        <tbody id="div-tbody"></tbody>
+        <tfoot><tr><th data-i18n="t_total">Total</th><th id="div-total">$0.00</th><th></th></tr></tfoot>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="div_forecast_t">Dividend Forecast</h3>
+      <div class="row">
+        <div class="field">
+          <label data-i18n="f_current">Current principal ($)</label>
+          <input id="f-principal" type="number" min="0" step="100" value="10000">
+        </div>
+        <div class="field">
+          <label data-i18n="f_yield">Annual yield (%)</label>
+          <input id="f-yield" type="number" min="0" step="0.1" value="6">
+        </div>
+        <div class="field">
+          <label data-i18n="f_contrib">Monthly contribution ($)</label>
+          <input id="f-monthly" type="number" min="0" step="50" value="200">
+        </div>
+        <div class="field">
+          <label data-i18n="f_years">Years</label>
+          <input id="f-years" type="number" min="1" max="40" value="10">
+        </div>
+        <div class="field">
+          <label data-i18n="f_reinvest">Reinvest dividends?</label>
+          <select id="f-reinvest"><option value="yes" data-i18n="yes">Yes</option><option value="no" data-i18n="no">No</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="primary" id="f-run" data-i18n="run">Run Forecast</button>
+      </div>
+      <canvas id="div-chart" height="220" style="margin-top:14px;width:100%"></canvas>
+      <table class="table" style="margin-top:10px">
+        <thead><tr><th data-i18n="t_year">Year</th><th data-i18n="t_income">Income</th><th data-i18n="t_balance">Balance</th></tr></thead>
+        <tbody id="f-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+
+
+<script src="assets/app.min.js?v=1"></script>
+<script src="assets/shared.min.js?v=1"></script>
+<script>
+injectHeaderFooter("dividends");
+let divRows = JSON.parse(localStorage.getItem("div_rows")||"[]");
+function renderDivTable(){
+  const tb=document.getElementById("div-tbody");tb.innerHTML="";
+  let total=0;
+  divRows.forEach((r,i)=>{
+    total+=r.amount;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${r.date}</td><td>${formatMoney(r.amount)}</td><td><button class="secondary" data-index="${i}" data-action="divdel">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById("div-total").textContent=formatMoney(total);
+  localStorage.setItem("div_rows",JSON.stringify(divRows));
+}
+document.getElementById("div-add").onclick=()=>{
+  const amt=+document.getElementById("div-amt").value||0;
+  const date=document.getElementById("div-date").value||new Date().toISOString().slice(0,10);
+  if(amt<=0)return;
+  divRows.push({amount:amt,date});
+  renderDivTable();
+  document.getElementById("div-amt").value="";
+  document.getElementById("div-date").value="";
+};
+document.getElementById("div-export").onclick=()=>{
+  const header="Date,Amount\n";
+  const body=divRows.map(r=>`${r.date},${r.amount}`).join("\n");
+  const blob=new Blob([header+body],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=Object.assign(document.createElement("a"),{href:url,download:"dividends.csv"});
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+};
+document.getElementById("div-clear").onclick=()=>{ if(confirm("Clear all dividends?")){ divRows=[]; renderDivTable(); } };
+document.getElementById("div-tbody").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-action='divdel']"); if(!btn)return;
+  const i=+btn.getAttribute("data-index"); divRows.splice(i,1); renderDivTable();
+});
+
+function runDividendForecast(){
+  const principal=+document.getElementById("f-principal").value||0;
+  const y=(+document.getElementById("f-yield").value||0)/100;
+  const monthly=+document.getElementById("f-monthly").value||0;
+  const years=+document.getElementById("f-years").value||1;
+  const reinvest=document.getElementById("f-reinvest").value==="yes";
+  const tbody=document.getElementById("f-tbody"); tbody.innerHTML="";
+  const balance=[]; let bal=principal;
+  for(let yr=1;yr<=years;yr++){
+    let inc=0;
+    for(let m=0;m<12;m++){
+      const mY=y/12; const div=bal*mY; inc+=div; if(reinvest) bal+=div; bal+=monthly;
+    }
+    balance.push(bal);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${yr}</td><td>${formatMoney(inc)}</td><td>${formatMoney(bal)}</td>`;
+    tbody.appendChild(tr);
+  }
+  drawLine("div-chart", balance.map(v=>v/1000));
+}
+document.getElementById("f-run").onclick=runDividendForecast;
+renderDivTable(); runDividendForecast();
+</script>
+</body>
+</html>

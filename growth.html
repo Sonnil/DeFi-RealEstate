@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DeFi‑RealEstate — Growth & Forecast</title>
+<meta name="description" content="Model mortgage amortization, appreciation, and equity growth with a year-by-year table.">
+<link rel="stylesheet" href="assets/style.min.css?v=1" />
+</head>
+<body>
+
+
+
+<main>
+  <div class="grid cols-2">
+    <div class="card">
+      <h2 data-i18n="g_title">Property Growth & Equity Forecast</h2>
+      <div class="row">
+        <div class="field"><label data-i18n="g_purchase">Purchase price ($)</label><input id="g-price" type="number" value="400000" step="1000"></div>
+        <div class="field"><label data-i18n="g_down">Down payment (%)</label><input id="g-down" type="number" value="20" step="1"></div>
+        <div class="field"><label data-i18n="g_rate">Interest rate (%)</label><input id="g-rate" type="number" value="6.5" step="0.1"></div>
+        <div class="field"><label data-i18n="g_term">Term (years)</label><input id="g-term" type="number" value="30" step="1"></div>
+        <div class="field"><label data-i18n="g_app">Appreciation/yr (%)</label><input id="g-app" type="number" value="3.5" step="0.1"></div>
+        <div class="field"><label data-i18n="g_extra">Extra principal/mo ($)</label><input id="g-extra" type="number" value="0" step="50"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="primary" id="g-run" data-i18n="run">Run Forecast</button>
+      </div>
+      <canvas id="g-chart" height="240" style="margin-top:14px;width:100%"></canvas>
+    </div>
+    <div class="card">
+      <h3 data-i18n="g_table">Year‑by‑Year</h3>
+      <table class="table">
+        <thead><tr><th data-i18n="t_year">Year</th><th data-i18n="t_value">Value</th><th data-i18n="t_principal">Principal Paid</th><th data-i18n="t_equity">Equity</th></tr></thead>
+        <tbody id="g-tbody"></tbody>
+        <tfoot><tr><th data-i18n="t_cagr">CAGR</th><th id="g-cagr" colspan="3">—</th></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</main>
+
+
+
+<script src="assets/app.min.js?v=1"></script>
+<script src="assets/shared.min.js?v=1"></script>
+<script>
+injectHeaderFooter("growth");
+function runGrowth(){
+  const price=+document.getElementById("g-price").value||0;
+  const downPct=(+document.getElementById("g-down").value||0)/100;
+  const rate=(+document.getElementById("g-rate").value||0)/100;
+  const term=+document.getElementById("g-term").value||30;
+  const app=(+document.getElementById("g-app").value||0)/100;
+  const extra=+document.getElementById("g-extra").value||0;
+
+  const loan=price*(1-downPct);
+  const n=term*12; const r=rate/12;
+  const basePmt = r ? (loan*r)/(1-Math.pow(1+r,-n)) : loan/n;
+
+  let bal=loan, value=price, year=0;
+  const tbody=document.getElementById("g-tbody"); tbody.innerHTML="";
+  const equities=[], values=[]; let totalPrincipal=0;
+
+  for(let m=1;m<=n && bal>0.01;m++){
+    const interest=r? bal*r:0;
+    const pmt=Math.min(basePmt+extra, bal+interest);
+    const principal=pmt-interest;
+    bal-=principal; totalPrincipal+=principal;
+    value *= (1+app/12);
+    if(m%12===0){
+      year++;
+      const equity=Math.max(0,value-bal);
+      equities.push(equity); values.push(value);
+      const tr=document.createElement("tr");
+      tr.innerHTML = `<td>${year}</td><td>${formatMoney(value)}</td><td>${formatMoney(totalPrincipal)}</td><td>${formatMoney(equity)}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+  const yrs = equities.length||1;
+  const finalVal = values[values.length-1]||price;
+  const cagr = Math.pow(finalVal/price,1/yrs)-1;
+  document.getElementById("g-cagr").textContent = (isFinite(cagr)?(cagr*100).toFixed(2):"0")+"%";
+  drawLine("g-chart", equities.map(e=>e/1000));
+}
+document.getElementById("g-run").onclick=runGrowth; runGrowth();
+</script>
+</body>
+</html>

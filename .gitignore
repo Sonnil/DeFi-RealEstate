@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Node/Build (in case used later)
+node_modules/
+dist/
+build/
+.tmp/
+.cache/
+parcel-cache/
+
+# Env/Secrets
+.env
+.env.*
+
+# Misc
+*.swp
+*.swo

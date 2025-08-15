@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DeFi‑RealEstate — Marketplace</title>
+<meta name="description" content="Browse mock real estate listings and reserve allocations via an accessible invest modal.">
+<link rel="stylesheet" href="assets/style.min.css?v=1" />
+</head>
+<body>
+
+
+
+<main>
+  <div class="card">
+    <h2 style="margin-top:0" data-i18n="m_title">Marketplace (Demo)</h2>
+    <p class="muted" data-i18n="m_desc">Browse mock listings, open the Invest modal, and propose an allocation (min $500).</p>
+    <div class="row">
+      <div class="field"><label data-i18n="m_search">Search</label><input id="m-search" placeholder="City, address..."></div>
+      <div class="field"><label data-i18n="m_type">Type</label>
+        <select id="m-type">
+          <option value="" data-i18n="any">Any</option>
+          <option value="Single Family" data-i18n="type_sf">Single Family</option>
+          <option value="Condo" data-i18n="type_con">Condo</option>
+          <option value="Townhome" data-i18n="type_th">Townhome</option>
+        </select></div>
+      <div class="field"><label data-i18n="m_beds">Beds (min)</label><input id="m-beds" type="number" min="0" step="1" placeholder="0"></div>
+      <div class="field"><label data-i18n="m_min">Min Price</label><input id="m-min" type="number" min="0" step="10000"></div>
+      <div class="field"><label data-i18n="m_max">Max Price</label><input id="m-max" type="number" min="0" step="10000"></div>
+      <div class="field"><label data-i18n="m_sort">Sort</label>
+        <select id="m-sort">
+          <option value="new" data-i18n="sort_new">Newest</option>
+          <option value="price_asc" data-i18n="sort_pa">Price ↑</option>
+          <option value="price_desc" data-i18n="sort_pd">Price ↓</option>
+          <option value="cap_desc" data-i18n="sort_cap">Cap Rate ↓</option>
+        </select></div>
+    </div>
+  </div>
+  <div class="cards" id="cards"></div>
+</main>
+
+<div class="modal-backdrop" id="mb"></div>
+<div class="modal" id="modal">
+  <div class="panel">
+    <header>
+      <h3 id="mod-title">Invest</h3>
+      <button class="secondary" id="mod-close">✕</button>
+    </header>
+    <div id="mod-body">
+      <p class="help" id="mod-help"></p>
+      <div class="row-2">
+        <div class="field"><label data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
+        <div class="field"><label data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="primary" id="inv-submit" data-i18n="invest">Invest</button>
+        <button class="secondary" id="inv-cancel" data-i18n="cancel">Cancel</button>
+      </div>
+      <p class="help" id="inv-msg" style="margin-top:10px"></p>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script src="assets/app.min.js?v=1"></script>
+<script src="assets/shared.min.js?v=1"></script>
+<script>
+injectHeaderFooter("market");
+let listings = getMockListings();
+function renderCards(){
+  const q=document.getElementById("m-search").value.trim().toLowerCase();
+  const t=document.getElementById("m-type").value;
+  const bedsMin=+document.getElementById("m-beds").value||0;
+  const minP=+document.getElementById("m-min").value||0;
+  const maxP=+document.getElementById("m-max").value||Infinity;
+  const sort=document.getElementById("m-sort").value;
+  let arr=listings.filter(p=>{
+    const okQ=!q||p.address.toLowerCase().includes(q);
+    const okT=!t||p.type===t;
+    const okB=(p.beds||0)>=bedsMin;
+    const okP=(p.price||0)>=minP&&(p.price||0)<=maxP;
+    return okQ&&okT&&okB&&okP;
+  });
+  arr.sort((a,b)=>{
+    if(sort==="price_asc")return a.price-b.price;
+    if(sort==="price_desc")return b.price-a.price;
+    if(sort==="cap_desc")return (b.capRate||0)-(a.capRate||0);
+    return (b.ts||0)-(a.ts||0);
+  });
+  const cards=document.getElementById("cards"); cards.innerHTML="";
+  const lang=localStorage.getItem("lang")||"en";
+  const tAvail=I18N[lang].available, tRaise=I18N[lang].raise;
+  arr.forEach(p=>{
+    const el=document.createElement("div");
+    el.className="property-card";
+    el.innerHTML=`
+      <img src="${p.image||''}" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">
+      <div class="property-details">
+        <h3>${p.address}</h3>
+        <div class="property-meta">
+          <span>${p.type||'—'}</span>
+          <span>🛏 ${p.beds||0}</span>
+          <span>🛁 ${p.baths||0}</span>
+          <span>📐 ${(p.sqft||0).toLocaleString()} sqft</span>
+          <span>💹 ${(p.capRate??'—')}% cap</span>
+        </div>
+        <div class="property-footer">
+          <div>
+            <div style="font-weight:800">${formatMoney(p.price)}</div>
+            <div class="muted"><span class="pill">${tRaise}: ${formatMoney(p.totalRaise)}</span></div>
+            <div class="muted"><span class="pill">${tAvail}: <strong>${formatMoney(p.availableRaise)}</strong></span></div>
+          </div>
+          <button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>
+        </div>
+      </div>`;
+    cards.appendChild(el);
+  });
+}
+renderCards();
+
+let currentListingId=null; const mb=document.getElementById("mb"), modal=document.getElementById("modal");
+function openInvest(id){
+  const p=listings.find(x=>x.id===id); if(!p)return;
+  currentListingId=id;
+  document.getElementById("mod-title").textContent=`Invest — ${p.address}`;
+  document.getElementById("mod-help").textContent=`${formatMoney(p.availableRaise)} available`;
+  document.getElementById("inv-name").value="";
+  document.getElementById("inv-amount").value=500;
+  document.getElementById("inv-msg").textContent="";
+  openModal('modal','mb');
+}
+function closeInvest(){ closeModal('modal','mb'); }
+document.getElementById("cards").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-action='invest']"); if(btn){ openInvest(btn.getAttribute("data-id")); }
+});
+document.getElementById("mod-close").onclick=closeInvest;
+document.getElementById("inv-cancel").onclick=closeInvest;
+mb.onclick=closeInvest;
+
+document.getElementById("inv-submit").onclick=()=>{
+  const name=document.getElementById("inv-name").value.trim();
+  const amt=+document.getElementById("inv-amount").value||0;
+  const lang=localStorage.getItem("lang")||"en";
+  if(!name){ document.getElementById("inv-msg").textContent=(lang==="vi"?"Vui lòng nhập tên.":"Please enter your name."); return; }
+  if(amt<500){ document.getElementById("inv-msg").textContent=(lang==="vi"?"Tối thiểu $500.":"Minimum is $500."); return; }
+  const idx=listings.findIndex(x=>x.id===currentListingId); if(idx<0)return;
+  if(amt>listings[idx].availableRaise){ document.getElementById("inv-msg").textContent=(lang==="vi"?"Vượt quá số vốn còn mở.":"Exceeds available amount."); return; }
+  listings[idx].availableRaise-=amt; saveMockListings(listings); renderCards();
+  document.getElementById("inv-msg").textContent=(lang==="vi"?"Đăng ký thành công!":"Allocation reserved!");
+  setTimeout(closeInvest,900);
+};
+
+["m-search","m-type","m-beds","m-min","m-max","m-sort"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderCards);
+});
+</script>
+</body>
+</html>
