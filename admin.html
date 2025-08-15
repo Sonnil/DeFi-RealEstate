@@ -27,6 +27,9 @@
   @media (max-width:720px){ main{padding:12px} }
   .icon-btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 2px}
   .icon-btn:hover{color:#fff}
+  /* Close (X) button styling in modal header */
+  .close-x{font-size:20px;line-height:1;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:8px}
+  .close-x:hover{color:#fff;background:#1b2133}
   /* Tooltip bubble (local) */
   .tooltip{position:relative;display:inline-block}
   .tooltip .tip{position:absolute;z-index:1000;left:50%;transform:translateX(-50%);bottom:125%;background:#0e1526;color:#e9eef5;border:1px solid #2a3550;border-radius:8px;padding:8px 10px;white-space:normal;font-size:12px;line-height:1.3;min-width:180px;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease}
@@ -97,7 +100,7 @@
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="a-modal-title">
     <div class="hdr">
       <h3 id="a-modal-title" data-i18n="a_title">Admin — Add Property (Demo)</h3>
-      <button class="secondary" id="a-cancel" data-i18n="cancel" aria-label="Close">Cancel</button>
+      <button class="icon-btn close-x" id="a-cancel" aria-label="Close" data-i18n-aria-label="cancel" title="Close">✕</button>
     </div>
     <div class="two-col">
       <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL" autocomplete="street-address" required></div>
@@ -293,12 +296,11 @@ function enterEdit(id){
   editingId = id;
   fillForm(p);
   const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].save;
-  const cancelBtn=document.getElementById('a-cancel'); cancelBtn.style.display='inline-block';
   renderAdminTable();
   updateAddButtonState();
   openAdminModal();
 }
-function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].add; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); updateAddButtonState(); }
+function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent=I18N[(localStorage.getItem('lang')||'en')].add; renderAdminTable(); clearForm(); updateAddButtonState(); }
 document.getElementById("a-add").onclick=()=>{
   // Validate form and highlight errors
   const fs = {
