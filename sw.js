@@ -1,13 +1,13 @@
 /* Simple offline cache for DeFi-RealEstate demo */
-const STATIC_CACHE = 'dre-static-v8';
+const STATIC_CACHE = 'dre-static-v9';
 const IMG_CACHE = 'dre-img-v1';
 const toURL = (p) => new URL(p, self.location).toString();
 const CORE_ASSETS = [
-  'index.html',
-  'dividends.html',
-  'growth.html',
-  'marketplace.html',
-  'admin.html',
+  '/index.html?rev=2',
+  '/dividends.html?rev=2',
+  '/growth.html?rev=2',
+  '/marketplace.html?rev=2',
+  '/admin.html?rev=2',
   'assets/style.min.css?v=4',
   'assets/app.min.js?v=2',
   'assets/shared.min.js?v=4',

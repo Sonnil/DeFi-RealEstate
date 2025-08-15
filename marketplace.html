@@ -5,7 +5,30 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>DeFi‑RealEstate — Marketplace</title>
 <meta name="description" content="Browse mock real estate listings and reserve allocations via an accessible invest modal.">
-<link rel="stylesheet" href="assets/style.min.css?v=4" />
+<!-- Critical CSS for faster first paint; full stylesheet loads asynchronously -->
+<style>
+  :root{--bg:#0b0d12;--card:#111623;--text:#e9eef5;--muted:#a9b2c2;--primary:#2e7cf6}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Arial,sans-serif}
+  main{padding:16px}
+  .card{background:var(--card);border-radius:12px;padding:20px}
+  .muted{color:var(--muted)}
+  button.primary{background:var(--primary);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#1b2133;color:#e9eef5;border:1px solid #2a3550;padding:10px 14px;border-radius:8px;cursor:pointer}
+  .property-card{background:#0f1523;border:1px solid #1f2a44;border-radius:12px;overflow:hidden}
+  .property-card img{display:block;width:100%;height:180px;object-fit:cover}
+  .property-details{padding:12px}
+  .property-footer{display:flex;justify-content:space-between;align-items:center}
+  @media (max-width:720px){ main{padding:12px} }
+  .error{outline:2px solid #e25d5d}
+  .pill{background:#121a2b;border:1px solid #1f2a44;border-radius:999px;padding:2px 8px}
+  .row,.row-2,.row-4{display:grid;gap:10px}
+  .row{grid-template-columns:repeat(6,1fr)}
+  .row-2{grid-template-columns:repeat(2,1fr)}
+  .row-4{grid-template-columns:repeat(4,1fr)}
+</style>
+<link rel="preload" href="assets/style.min.css?v=4" as="style">
+<link rel="stylesheet" href="assets/style.min.css?v=4" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="assets/style.min.css?v=4"></noscript>
 </head>
 <body>
 
