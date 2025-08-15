@@ -61,7 +61,7 @@
 
 <script src="assets/config.js"></script>
 <script src="assets/app.min.js?v=2"></script>
-<script src="assets/shared.min.js?v=3"></script>
+<script src="assets/shared.min.js?v=4"></script>
 <script>
 injectHeaderFooter("admin");
 let listings = getMockListings();
@@ -99,7 +99,7 @@ function renderAdminTable(){
     const isEditing = editingId && editingId === p.id;
       const editBtn = isEditing
         ? `<button data-id="${p.id}" data-action="cancel" title="Cancel edit" aria-label="Cancel edit">\u2715</button>`
-        : `<button data-id="${p.id}" data-action="edit" title="Edit" aria-label="Edit" class="icon-btn"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="6" y="15" width="12" height="2" rx="1" transform="rotate(-45 12 16)"></rect><rect x="16.5" y="4.5" width="4" height="2" rx="1" transform="rotate(-45 18.5 5.5)"></rect></svg></button>`;
+        : `<button data-id="${p.id}" data-action="edit" title="Edit" aria-label="Edit" class="icon-btn">\u270f\ufe0f</button>`;
   tr.innerHTML=`<td class=\"row-action\">${editBtn}</td><td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\"><button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">Remove</button></td>`;
     tb.appendChild(tr);
   });
