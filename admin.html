@@ -38,7 +38,7 @@
     <h3 data-i18n="a_current">Current Offerings</h3>
     <div id="a-notice" class="notice" style="display:none"></div>
     <table class="table">
-      <thead><tr><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th>Actions</th></tr></thead>
+      <thead><tr><th class="row-action" aria-label="Edit"></th><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th>Actions</th></tr></thead>
       <tbody id="a-tbody"></tbody>
     </table>
   </div>
@@ -100,7 +100,7 @@ function renderAdminTable(){
     const editBtn = isEditing
       ? `<button data-id="${p.id}" data-action="cancel" title="Cancel edit" aria-label="Cancel edit">✕</button>`
       : `<button data-id="${p.id}" data-action="edit" title="Edit" aria-label="Edit">✏️</button>`;
-    tr.innerHTML=`<td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\">${editBtn}<button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">Remove</button></td>`;
+  tr.innerHTML=`<td class=\"row-action\">${editBtn}</td><td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\"><button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">Remove</button></td>`;
     tb.appendChild(tr);
   });
 }
