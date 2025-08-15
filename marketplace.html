@@ -134,12 +134,14 @@ function sumCommitted(p){
 function capMax(p){ return Math.max(0, Math.floor((+p.price||0) * 0.49)); }
 function availCap(p){ return Math.max(0, capMax(p) - sumCommitted(p)); }
 function renderCards(){
-  const q=document.getElementById("m-search").value.trim().toLowerCase();
-  const t=document.getElementById("m-type").value;
-  const bedsMin=+document.getElementById("m-beds").value||0;
-  const minP=+document.getElementById("m-min").value||0;
-  const maxP=+document.getElementById("m-max").value||Infinity;
-  const sort=document.getElementById("m-sort").value;
+  const q=(document.getElementById("m-search").value||'').trim().toLowerCase();
+  const t=document.getElementById("m-type").value||'';
+  const bedsMin=+(document.getElementById("m-beds").value||0)||0;
+  const minVal=(document.getElementById("m-min").value||'');
+  const maxVal=(document.getElementById("m-max").value||'');
+  const minP=(minVal===''?0:+minVal);
+  const maxP=(maxVal===''?Infinity:+maxVal);
+  const sort=document.getElementById("m-sort").value||'new';
   let arr=listings.filter(p=>{
     const okQ=!q||p.address.toLowerCase().includes(q);
     const okT=!t||p.type===t;
@@ -219,6 +221,25 @@ try{
     renderCards();
   }
 }catch(e){ renderCards(); }
+// If page opened with query params, prefill and apply filters
+try{
+  const url = new URL(window.location.href);
+  const p = url.searchParams;
+  const map = [
+    ['q','m-search'],
+    ['type','m-type'],
+    ['beds','m-beds'],
+    ['min','m-min'],
+    ['max','m-max'],
+    ['sort','m-sort']
+  ];
+  let any=false;
+  map.forEach(([k,id])=>{
+    const v = p.get(k);
+    if(v!==null){ const el=document.getElementById(id); if(el){ el.value=v; any=true; } }
+  });
+  if(any){ renderCards(); }
+}catch(e){}
 // Tooltip behavior: toggle .show briefly on click/focus for keyboard users with fade
 document.addEventListener('click', (e)=>{
   const btn = e.target.closest && e.target.closest('.tooltip .icon-btn');
