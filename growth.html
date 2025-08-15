@@ -44,6 +44,7 @@
 
 <script src="assets/app.min.js?v=2"></script>
 <script src="assets/shared.min.js?v=4"></script>
+<script src="assets/i18n-extra.js?v=1"></script>
 <script>
 injectHeaderFooter("growth");
 function runGrowth(){
@@ -64,12 +65,13 @@ function runGrowth(){
   const app=(+appEl.value||0)/100;
   const extra=+extraEl.value||0;
 
-  if(!(price>0)){ msg.textContent='Purchase price must be greater than 0.'; priceEl.classList.add('error'); priceEl.setAttribute('aria-invalid','true'); priceEl.focus(); return; }
-  if(downPct<0 || downPct>=1){ msg.textContent='Down payment must be between 0 and 100.'; downEl.classList.add('error'); downEl.setAttribute('aria-invalid','true'); downEl.focus(); return; }
-  if(rate<0){ msg.textContent='Interest rate cannot be negative.'; rateEl.classList.add('error'); rateEl.setAttribute('aria-invalid','true'); rateEl.focus(); return; }
-  if(!(term>0)){ msg.textContent='Term must be greater than 0 years.'; termEl.classList.add('error'); termEl.setAttribute('aria-invalid','true'); termEl.focus(); return; }
-  if(app<-1){ msg.textContent='Appreciation cannot be less than -100%.'; appEl.classList.add('error'); appEl.setAttribute('aria-invalid','true'); appEl.focus(); return; }
-  if(extra<0){ msg.textContent='Extra principal cannot be negative.'; extraEl.classList.add('error'); extraEl.setAttribute('aria-invalid','true'); extraEl.focus(); return; }
+  const lang=localStorage.getItem('lang')||'en';
+  if(!(price>0)){ msg.textContent=(I18N[lang]&&I18N[lang].g_err_price)||'Purchase price must be greater than 0.'; priceEl.classList.add('error'); priceEl.setAttribute('aria-invalid','true'); priceEl.focus(); return; }
+  if(downPct<0 || downPct>=1){ msg.textContent=(I18N[lang]&&I18N[lang].g_err_down)||'Down payment must be between 0 and 100.'; downEl.classList.add('error'); downEl.setAttribute('aria-invalid','true'); downEl.focus(); return; }
+  if(rate<0){ msg.textContent=(I18N[lang]&&I18N[lang].g_err_rate)||'Interest rate cannot be negative.'; rateEl.classList.add('error'); rateEl.setAttribute('aria-invalid','true'); rateEl.focus(); return; }
+  if(!(term>0)){ msg.textContent=(I18N[lang]&&I18N[lang].g_err_term)||'Term must be greater than 0 years.'; termEl.classList.add('error'); termEl.setAttribute('aria-invalid','true'); termEl.focus(); return; }
+  if(app<-1){ msg.textContent=(I18N[lang]&&I18N[lang].g_err_app)||'Appreciation cannot be less than -100%.'; appEl.classList.add('error'); appEl.setAttribute('aria-invalid','true'); appEl.focus(); return; }
+  if(extra<0){ msg.textContent=(I18N[lang]&&I18N[lang].g_err_extra)||'Extra principal cannot be negative.'; extraEl.classList.add('error'); extraEl.setAttribute('aria-invalid','true'); extraEl.focus(); return; }
 
   const loan=price*(1-downPct);
   const n=term*12; const r=rate/12;

@@ -79,6 +79,7 @@
 
 <script src="assets/app.min.js?v=2"></script>
 <script src="assets/shared.min.js?v=4"></script>
+<script src="assets/i18n-extra.js?v=1"></script>
 <script>
 injectHeaderFooter("dividends");
 let divRows = JSON.parse(localStorage.getItem("div_rows")||"[]");
@@ -104,20 +105,22 @@ document.getElementById("div-add").onclick=()=>{
   const amt=+divAmtEl.value||0;
   const date=divDateEl.value||new Date().toISOString().slice(0,10);
   clearDivErrors();
-  if(amt<=0){ divMsg.textContent='Amount must be greater than 0.'; divAmtEl.classList.add('error'); divAmtEl.setAttribute('aria-invalid','true'); divAmtEl.focus(); return; }
+  const lang=localStorage.getItem('lang')||'en';
+  if(amt<=0){ divMsg.textContent=(I18N[lang]&&I18N[lang].div_err_amt_gt0)||'Amount must be greater than 0.'; divAmtEl.classList.add('error'); divAmtEl.setAttribute('aria-invalid','true'); divAmtEl.focus(); return; }
   divRows.push({amount:amt,date});
   renderDivTable();
   divAmtEl.value=""; divDateEl.value=""; clearDivErrors();
 };
 document.getElementById("div-export").onclick=()=>{
-  const header="Date,Amount\n";
+  const lang=localStorage.getItem('lang')||'en';
+  const header=`${((I18N[lang]&&I18N[lang].csv_date)||'Date')},${((I18N[lang]&&I18N[lang].csv_amount)||'Amount')}\n`;
   const body=divRows.map(r=>`${r.date},${r.amount}`).join("\n");
   const blob=new Blob([header+body],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
   const a=Object.assign(document.createElement("a"),{href:url,download:"dividends.csv"});
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 };
-document.getElementById("div-clear").onclick=()=>{ if(confirm("Clear all dividends?")){ divRows=[]; renderDivTable(); clearDivErrors(); } };
+document.getElementById("div-clear").onclick=()=>{ const lang=localStorage.getItem('lang')||'en'; if(confirm(((I18N[lang]&&I18N[lang].div_confirm_clear)||'Clear all dividends?'))){ divRows=[]; renderDivTable(); clearDivErrors(); } };
 document.getElementById("div-tbody").addEventListener("click",e=>{
   const btn=e.target.closest("button[data-action='divdel']"); if(!btn)return;
   const i=+btn.getAttribute("data-index"); divRows.splice(i,1); renderDivTable();
