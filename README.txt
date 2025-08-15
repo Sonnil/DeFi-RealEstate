@@ -42,3 +42,10 @@ Quick test / serve
 python3 -m http.server 8000
 open http://localhost:8000/index.html
 
+
+Live deployment
+---------------
+- Main branch auto-deploys to GitHub Pages via Actions.
+- Live URL: https://sonnil.github.io/DeFi-RealEstate/
+- Issues: https://github.com/Sonnil/DeFi-RealEstate/issues
+

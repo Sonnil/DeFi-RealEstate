@@ -30,8 +30,8 @@ function injectHeaderFooter(activePage) {
   const footerHTML = `
 <footer role="contentinfo">
   <div class="foot">
-    <div>© <span id="yr"></span> DeFi‑RealEstate • <span data-i18n="foot_rights">All rights reserved.</span></div>
-    <div class="muted">Made for demo — mock data only.</div>
+  <div>© <span id="yr"></span> DeFi‑RealEstate • <span data-i18n="foot_rights">All rights reserved.</span></div>
+  <div class="muted">Made for demo — mock data only. · <a href="https://sonnil.github.io/DeFi-RealEstate/" target="_blank" rel="noopener">Live site</a> · <a href="https://github.com/Sonnil/DeFi-RealEstate/issues" target="_blank" rel="noopener">Report issue</a></div>
   </div>
 </footer>`;
   document.body.insertAdjacentHTML('afterbegin', headerHTML);
