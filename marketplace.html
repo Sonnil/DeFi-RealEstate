@@ -134,7 +134,9 @@ function renderCards(){
   arr.forEach(p=>{
     const el=document.createElement("div");
     el.className="property-card";
-    el.innerHTML=`
+  const avail = +p.availableRaise || 0;
+  const hideInvest = avail < 500;
+  el.innerHTML=`
       <img src="${p.image||''}" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">
         <div class="property-details">
         <h3>${p.address}</h3>
@@ -166,7 +168,9 @@ function renderCards(){
               <span class="pill">${tAvail}: <strong>${formatMoney(p.availableRaise)}</strong></span>
             </div>
           </div>
-            <button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>
+            ${hideInvest
+              ? `<span class="pill" aria-label="Fullying Invested">🎉 Fullying Invested</span>`
+              : `<button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>`}
         </div>
       </div>`;
     cards.appendChild(el);
