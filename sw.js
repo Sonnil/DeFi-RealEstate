@@ -10,7 +10,7 @@ const CORE_ASSETS = [
   'admin.html',
   'assets/style.min.css?v=3',
   'assets/app.min.js?v=2',
-  'assets/shared.min.js?v=2'
+  'assets/shared.min.js?v=3'
 ].map(toURL);
 
 self.addEventListener('install', (event) => {

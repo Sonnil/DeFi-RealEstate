@@ -11,7 +11,8 @@ function injectHeaderFooter(activePage) {
   <div class="nav">
     <a href="index.html" class="brand" aria-label="Home"><div class="logo">DR</div> <span>DeFi‑RealEstate</span></a>
     <div class="grow"></div>
-    <nav role="navigation" aria-label="Primary">
+    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="primaryNav">☰</button>
+    <nav role="navigation" aria-label="Primary" id="primaryNav">
       <a href="index.html" data-page="home" data-i18n="nav_home">Home</a>
       <a href="dividends.html" data-page="dividends" data-i18n="nav_dividends">Dividend Tracker</a>
       <a href="growth.html" data-page="growth" data-i18n="nav_growth">Growth & Forecast</a>
@@ -35,6 +36,25 @@ function injectHeaderFooter(activePage) {
 </footer>`;
   document.body.insertAdjacentHTML('afterbegin', headerHTML);
   document.body.insertAdjacentHTML('beforeend', footerHTML);
+  // Mobile menu toggle
+  try{
+    const navWrap = document.querySelector('header .nav');
+    const btn = document.getElementById('menuBtn');
+    if(btn && navWrap){
+      btn.addEventListener('click', ()=>{
+        const open = navWrap.classList.toggle('show-menu');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+      // Close when a nav link is clicked (on small screens)
+      const links = navWrap.querySelectorAll('nav a');
+      links.forEach(a=>a.addEventListener('click', ()=>{
+        if(navWrap.classList.contains('show-menu')){
+          navWrap.classList.remove('show-menu');
+          btn.setAttribute('aria-expanded','false');
+        }
+      }));
+    }
+  }catch{}
   if (typeof initHeader === 'function') initHeader(activePage);
 }
 
