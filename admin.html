@@ -132,8 +132,43 @@ function enterEdit(id){
 }
 function exitEdit(){ editingId=null; const addBtn=document.getElementById('a-add'); addBtn.textContent='Add'; document.getElementById('a-cancel').style.display='none'; renderAdminTable(); clearForm(); }
 document.getElementById("a-add").onclick=()=>{
+  // Validate form and highlight errors
+  const fs = {
+    address: document.getElementById('a-address'),
+    type: document.getElementById('a-type'),
+    price: document.getElementById('a-price'),
+    cap: document.getElementById('a-cap'),
+    beds: document.getElementById('a-beds'),
+    baths: document.getElementById('a-baths'),
+    sqft: document.getElementById('a-sqft'),
+    raise: document.getElementById('a-raise'),
+    img: document.getElementById('a-img'),
+    desc: document.getElementById('a-desc')
+  };
+  // Clear previous error styling
+  Object.values(fs).forEach(el=>{ if(el){ el.classList.remove('error'); el.removeAttribute('aria-invalid'); } });
+  const note = document.getElementById('a-notice');
+  function aErr(msg, el){ if(note){ note.style.display='block'; note.textContent=msg; note.setAttribute('role','alert'); }
+    if(el){ el.classList.add('error'); el.setAttribute('aria-invalid','true'); el.focus(); }
+    return;
+  }
+  const addr = (fs.address?.value||'').trim();
+  if(!addr){ aErr('Please enter an address.', fs.address); return; }
+  const typeVal = (fs.type?.value||'').trim();
+  if(!typeVal){ aErr('Please select a type.', fs.type); return; }
+  const priceVal = +((fs.price?.value)||0);
+  if(!(priceVal>0)){ aErr('Price must be greater than 0.', fs.price); return; }
+  const capStr = (fs.cap?.value||'').trim();
+  if(capStr!=='' && (isNaN(+capStr) || +capStr<0 || +capStr>100)){ aErr('Cap Rate must be between 0 and 100.', fs.cap); return; }
+  const bedsStr = (fs.beds?.value||'').trim(); if(bedsStr!=='' && +bedsStr<0){ aErr('Beds cannot be negative.', fs.beds); return; }
+  const bathsStr = (fs.baths?.value||'').trim(); if(bathsStr!=='' && +bathsStr<0){ aErr('Baths cannot be negative.', fs.baths); return; }
+  const sqftStr = (fs.sqft?.value||'').trim(); if(sqftStr!=='' && +sqftStr<0){ aErr('Sqft cannot be negative.', fs.sqft); return; }
+  const raiseStr = (fs.raise?.value||'').trim(); if(raiseStr!=='' && +raiseStr<0){ aErr('Total Raise must be 0 or more.', fs.raise); return; }
+  const imgStr = (fs.img?.value||'').trim();
+  if(imgStr && !/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')){ aErr('Image URL must start with http(s) or be a data URL.', fs.img); return; }
+
   const g=id=>document.getElementById(id).value;
-  const price=+g("a-price")||0, raise=+g("a-raise")||0;
+  const price=priceVal, raise=+(raiseStr||0);
   if(editingId){
     const idx=listings.findIndex(x=>x.id===editingId); if(idx<0) return;
     let available = listings[idx].availableRaise;
@@ -145,7 +180,9 @@ document.getElementById("a-add").onclick=()=>{
       capRate:+g('a-cap')||null, beds:+g('a-beds')||0, baths:+g('a-baths')||0, sqft:+g('a-sqft')||0,
       totalRaise:newTotal, availableRaise:available, image:g('a-img'), description:g('a-desc')
     };
-    listings[idx]=updated; saveMockListings(listings); renderAdminTable(); exitEdit();
+  listings[idx]=updated; saveMockListings(listings); renderAdminTable();
+  const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
+  exitEdit();
   } else {
     const id="P-"+Math.random().toString(36).slice(2,7).toUpperCase();
     const p={id,ts:Date.now(),address:g("a-address"),type:g("a-type"),price,
@@ -153,7 +190,9 @@ document.getElementById("a-add").onclick=()=>{
              capRate:+g("a-cap")||null,totalRaise:raise||Math.round(price*0.3),
              availableRaise:raise||Math.round(price*0.3),image:g("a-img"),
              description:g("a-desc"),sourceUrl:"#"};
-    listings.unshift(p); saveMockListings(listings); renderAdminTable(); clearForm();
+  listings.unshift(p); saveMockListings(listings); renderAdminTable();
+  const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
+  clearForm();
   }
 };
 document.getElementById('a-cancel').onclick=exitEdit;
