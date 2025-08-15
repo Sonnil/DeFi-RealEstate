@@ -24,6 +24,9 @@
   @media (max-width:720px){ .form-grid{grid-template-columns:1fr} .form-grid .span-2{grid-column:span 1} }
   .icon-btn{background:transparent;border:0;color:inherit;cursor:pointer;padding:0 2px}
   .icon-btn:hover{filter:brightness(1.1)}
+  /* Image wrapper + invested badge */
+  .img-wrap{position:relative}
+  .badge-invested{position:absolute;top:10px;right:10px;background:#10b981;color:#fff;border:1px solid #0ea37f;border-radius:999px;padding:6px 10px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
   /* Tooltip bubble (local override to ensure correct behavior in Marketplace) */
   .tooltip{position:relative;display:inline-block}
   /* Prevent white highlight from global chip styles on nested tooltip wrapper */
@@ -33,6 +36,8 @@
   .tooltip:hover .tip,.tooltip:focus-within .tip,.tooltip.show .tip{opacity:1;pointer-events:auto;transform:translate(-50%,-2px)}
   .tooltip .tip [role="heading"]{font-weight:600;margin:0 0 4px}
   @media (prefers-reduced-motion: reduce){ .tooltip .tip{transition:none} }
+  /* Required label marker */
+  label.req::after{content:" *"; color:#e11d48; font-weight:700}
 </style>
 <link rel="preload" href="assets/style.min.css?v=6" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=6" media="print" onload="this.media='all'">
@@ -80,10 +85,10 @@
     <div id="mod-body">
   <p class="help" id="mod-help"></p>
       <div class="form-grid">
-        <div class="field"><label data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
-        <div class="field"><label data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
-        <div class="field"><label data-i18n="inv_email_label">Email</label><input id="inv-email" type="email" placeholder="jane@example.com" autocomplete="email"></div>
-        <div class="field"><label data-i18n="inv_phone_label">Phone</label><input id="inv-phone" type="tel" inputmode="tel" placeholder="(555) 555-5555" autocomplete="tel"></div>
+  <div class="field"><label class="req" data-i18n="inv_name">Your name</label><input id="inv-name" placeholder="Jane Doe"></div>
+  <div class="field"><label class="req" data-i18n="inv_amount">Amount ($) — min $500</label><input id="inv-amount" type="number" min="500" step="50" value="500"></div>
+  <div class="field"><label class="req" data-i18n="inv_email_label">Email</label><input id="inv-email" type="email" placeholder="jane@example.com" autocomplete="email"></div>
+  <div class="field"><label class="req" data-i18n="inv_phone_label">Phone</label><input id="inv-phone" type="tel" inputmode="tel" placeholder="(555) 555-5555" autocomplete="tel"></div>
         <div class="field"><label data-i18n="cc_name_label">Name on Card</label><input id="cc-name" placeholder="Jane A Doe" autocomplete="cc-name"></div>
         <div class="field"><label data-i18n="cc_number_label">Card Number</label><input id="cc-number" inputmode="numeric" pattern="[0-9 ]*" placeholder="4242 4242 4242 4242" autocomplete="cc-number"></div>
         <div class="field"><label data-i18n="cc_exp_label">Expiry (MM/YY)</label><input id="cc-exp" inputmode="numeric" placeholder="MM/YY" autocomplete="cc-exp"></div>
@@ -104,10 +109,29 @@
 
 <script src="assets/app.min.js?v=6"></script>
 <script src="assets/shared.min.js?v=5"></script>
-<script src="assets/i18n-extra.js?v=2"></script>
+<script src="assets/i18n-extra.js?v=3"></script>
 <script>
 injectHeaderFooter("market");
 let listings = getMockListings();
+// Normalize: if a property has no submissions, reset its totalRaise to 0 (ignore legacy values)
+try{
+  listings = Array.isArray(listings) ? listings.map(p=>{
+    const inv = Array.isArray(p?.investments) ? p.investments : [];
+    if(!inv.length){ return { ...p, totalRaise: 0 }; }
+    return p;
+  }) : listings;
+  saveMockListings && saveMockListings(listings);
+}catch(e){}
+// 49% rule helpers: committed = sum(investments), available = 49% of price minus committed
+function getInvestments(p){ return Array.isArray(p.investments) ? p.investments : []; }
+function sumCommitted(p){
+  const inv = getInvestments(p);
+  if(inv.length) return inv.reduce((s,x)=> s + ((x.status==='approved') ? (+x.amount||0) : 0), 0);
+  // No submissions => committed is 0 (reset Raise)
+  return 0;
+}
+function capMax(p){ return Math.max(0, Math.floor((+p.price||0) * 0.49)); }
+function availCap(p){ return Math.max(0, capMax(p) - sumCommitted(p)); }
 function renderCards(){
   const q=document.getElementById("m-search").value.trim().toLowerCase();
   const t=document.getElementById("m-type").value;
@@ -130,14 +154,19 @@ function renderCards(){
   });
   const cards=document.getElementById("cards"); cards.innerHTML="";
   const lang=localStorage.getItem("lang")||"en";
-  const tAvail=I18N[lang].available, tRaise=I18N[lang].raise;
+  const tRaise=I18N[lang].raise;
+  const tActual=I18N[lang].t_actual_available || 'Actual Available';
   arr.forEach(p=>{
     const el=document.createElement("div");
     el.className="property-card";
-  const avail = +p.availableRaise || 0;
+  const committed = sumCommitted(p);
+  const avail = availCap(p);
   const hideInvest = avail < 500;
   el.innerHTML=`
-      <img src="${p.image||''}" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">
+      <div class="img-wrap">
+        <img src="${p.image||''}" alt="property" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">
+        ${hideInvest ? `<span class="badge-invested" aria-label="100% invested">🎉 100% invested</span>` : ``}
+      </div>
         <div class="property-details">
         <h3>${p.address}</h3>
         <div class="property-meta">
@@ -162,15 +191,13 @@ function renderCards(){
               </span>
             </div>
             <div class="muted" style="display:flex;align-items:center;gap:6px">
-              <span class="pill">${tRaise}: ${formatMoney(p.totalRaise)}</span>
+              <span class="pill">${tRaise}: ${formatMoney(committed)}</span>
             </div>
             <div class="muted" style="display:flex;align-items:center;gap:6px">
-              <span class="pill">${tAvail}: <strong>${formatMoney(p.availableRaise)}</strong></span>
+              <span class="pill">${tActual}: <strong>${formatMoney(avail)}</strong></span>
             </div>
           </div>
-            ${hideInvest
-              ? `<span class="pill" aria-label="Fullying Invested">🎉 Fullying Invested</span>`
-              : `<button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>`}
+            ${hideInvest ? '' : `<button class="primary" data-id="${p.id}" data-action="invest">${I18N[lang].invest}</button>`}
         </div>
       </div>`;
     cards.appendChild(el);
@@ -200,7 +227,7 @@ function openInvest(id){
   currentListingId=id;
   const lang=localStorage.getItem('lang')||'en';
   document.getElementById("mod-title").textContent=`${I18N[lang].invest_title} — ${p.address}`;
-  const avail = +p.availableRaise||0;
+  const avail = availCap(p);
   if(avail<=0){
     document.getElementById("mod-help").textContent = I18N[lang].fully_invested || 'Fully invested';
   } else {
@@ -262,11 +289,11 @@ document.getElementById("inv-submit").onclick=()=>{
   if(!vals.name) return err(I18N[lang].err_name_required, fields.name);
   if(vals.amount < 500) return err(I18N[lang].err_min_amount, fields.amount);
   const idx=listings.findIndex(x=>x.id===currentListingId); if(idx<0) return;
-  const availNow = +listings[idx].availableRaise||0;
-  if(availNow<=0){ return err(I18N[lang].fully_invested || 'Fully invested'); }
-  if(vals.amount > availNow){
+  const availNowAmt = availCap(listings[idx]);
+  if(availNowAmt<=0){ return err(I18N[lang].fully_invested || 'Fully invested'); }
+  if(vals.amount > availNowAmt){
     const msgTmpl = I18N[lang].err_max_amount_tmpl || 'Maximum investment is {max}';
-    return err(msgTmpl.replace('{max}', formatMoney(availNow)), fields.amount);
+    return err(msgTmpl.replace('{max}', formatMoney(availNowAmt)), fields.amount);
   }
   // Contact validation
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(vals.email);
@@ -274,14 +301,15 @@ document.getElementById("inv-submit").onclick=()=>{
   const phoneDigits = onlyDigits(vals.phone);
   if(phoneDigits.length < 7) return err(I18N[lang].err_phone, fields.phone);
   // Card validation (basic)
-  if(!vals.ccName) return err(I18N[lang].err_cc_name, fields.ccName);
-  if(!luhnCheck(vals.ccNumber)) return err(I18N[lang].err_cc_number, fields.ccNumber);
-  if(!validExpiry(vals.ccExp)) return err(I18N[lang].err_cc_exp, fields.ccExp);
-  if(!/^\d{3,4}$/.test(vals.ccCvc)) return err(I18N[lang].err_cc_cvc, fields.ccCvc);
-  if(vals.ccZip.length < 3) return err(I18N[lang].err_cc_zip, fields.ccZip);
+  // Credit card fields are optional for now; skip card validations
 
-  // Simulate success, no real payment processed
-  listings[idx].availableRaise -= vals.amount;
+  // Simulate success: record investment, then recompute derived totals
+  const p2 = listings[idx];
+  if(!Array.isArray(p2.investments)) p2.investments = [];
+  p2.investments.unshift({ name: vals.name, email: vals.email, phone: vals.phone, amount: vals.amount, ts: Date.now(), status: 'pending' });
+  // Keep legacy fields in sync for other views
+  const committed2 = sumCommitted(p2);
+  p2.totalRaise = committed2;
   saveMockListings(listings);
   renderCards();
   msgEl.textContent = I18N[lang].success_reserved;

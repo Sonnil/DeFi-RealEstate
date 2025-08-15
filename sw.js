@@ -1,5 +1,5 @@
 /* Simple offline cache for DeFi-RealEstate demo */
-const STATIC_CACHE = 'dre-static-v18';
+const STATIC_CACHE = 'dre-static-v19';
 const IMG_CACHE = 'dre-img-v1';
 const toURL = (p) => new URL(p, self.location).toString();
 const CORE_ASSETS = [
@@ -11,7 +11,7 @@ const CORE_ASSETS = [
   'assets/style.min.css?v=6',
   'assets/app.min.js?v=6',
   'assets/shared.min.js?v=5',
-  'assets/i18n-extra.js?v=2'
+  'assets/i18n-extra.js?v=4'
 ].map(toURL);
 
 self.addEventListener('install', (event) => {

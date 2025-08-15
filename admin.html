@@ -34,6 +34,15 @@
   .tooltip:hover .tip,.tooltip:focus-within .tip,.tooltip.show .tip{opacity:1;pointer-events:auto;transform:translate(-50%,-2px)}
   .tooltip .tip [role="heading"]{font-weight:600;margin:0 0 4px}
   @media (prefers-reduced-motion: reduce){ .tooltip .tip{transition:none} }
+  /* Keep expanded submissions within the card frame */
+  .sub-row td{ padding: 0 !important; }
+  .sub-box{ margin:8px 0; background:var(--card); border:1px solid #1f2a44; border-radius:10px; padding:10px; font-size: clamp(12px, 1.1vw + 0.5rem, 14px) }
+  .sub-box table{ width:100%; border-collapse:collapse }
+  .sub-box table th, .sub-box table td{ border-bottom:0; padding:6px 8px; vertical-align: top; }
+  /* Allow long email/phone to wrap to avoid pushing amount */
+  .sub-box table td:nth-child(2), .sub-box table td:nth-child(3){ overflow-wrap: anywhere; word-break: break-word; }
+  /* Amount column: tight, right-aligned, no wrap */
+  .sub-box table th:nth-child(4), .sub-box table td:nth-child(4){ white-space: nowrap; text-align: right; width:1%; }
 </style>
 <link rel="preload" href="assets/style.min.css?v=6" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=6" media="print" onload="this.media='all'">
@@ -56,7 +65,16 @@
     <h3 data-i18n="a_current">Current Offerings</h3>
     <div id="a-notice" class="notice" style="display:none"></div>
     <table class="table">
-  <thead><tr><th class="row-action" data-i18n-aria-label="edit"></th><th data-i18n="t_address">Address</th><th data-i18n="t_price">Price</th><th data-i18n="t_raise">Raise</th><th data-i18n="t_available">Available</th><th data-i18n="t_actions">Actions</th></tr></thead>
+      <thead>
+        <tr>
+          <th class="row-action" data-i18n-aria-label="edit"></th>
+          <th data-i18n="t_address">Address</th>
+          <th data-i18n="t_price">Price</th>
+          <th data-i18n="t_raise">Raise</th>
+          <th data-i18n="t_actual_available">Actual Available</th>
+          <th data-i18n="t_actions">Actions</th>
+        </tr>
+      </thead>
       <tbody id="a-tbody"></tbody>
     </table>
   </div>
@@ -103,7 +121,8 @@
       <div class="field"><label data-i18n="a_beds">Beds</label><input id="a-beds" type="number" step="1" min="0" required></div>
       <div class="field"><label data-i18n="a_baths">Baths</label><input id="a-baths" type="number" step="1" min="0" required></div>
       <div class="field"><label data-i18n="a_sqft">Sqft</label><input id="a-sqft" type="number" step="50" min="0" required></div>
-      <div class="field"><label data-i18n="a_raise">Total Raise ($)</label><input id="a-raise" type="number" step="1000" min="0" required></div>
+    <div class="field"><label data-i18n="a_raise">Total Raise ($)</label><input id="a-raise" type="number" step="1000" min="0" required></div>
+  <div class="field"><label data-i18n="a_actual_available">Actual Available ($)</label><input id="a-actual" type="number" step="1000" min="0" disabled><small class="muted" data-i18n="a_actual_hint">Auto: 49% of Price minus committed</small></div>
       <div class="field"><label data-i18n="a_img">Image URL</label><input id="a-img" placeholder="https://..." required></div>
       <div class="field" style="grid-column:span 2"><label data-i18n="a_desc_label">Description</label><input id="a-desc" placeholder="Highlights, neighborhood, upgrades..." required></div>
     </div>
@@ -119,10 +138,19 @@
 
 <script src="assets/app.min.js?v=6"></script>
 <script src="assets/shared.min.js?v=5"></script>
-<script src="assets/i18n-extra.js?v=2"></script>
+<script src="assets/i18n-extra.js?v=4"></script>
 <script>
 injectHeaderFooter("admin");
 let listings = getMockListings();
+// Normalize: if a property has no submissions, reset its totalRaise to 0
+try{
+  listings = Array.isArray(listings) ? listings.map(p=>{
+    const inv = Array.isArray(p?.investments) ? p.investments : [];
+    if(!inv.length){ return { ...p, totalRaise: 0 }; }
+    return p;
+  }) : listings;
+  saveMockListings && saveMockListings(listings);
+}catch(e){}
 let editingId = null;
 let trash = JSON.parse(localStorage.getItem('demo_trash')||'[]');
 let lastDeleted = [];
@@ -138,29 +166,59 @@ function isAdminFormValid(){
   const bathsStr = (q('a-baths')||'').trim(); if(bathsStr==='') return false; if(+bathsStr<0) return false;
   const sqftStr = (q('a-sqft')||'').trim(); if(sqftStr==='') return false; if(+sqftStr<0) return false;
   const raiseStr = (q('a-raise')||'').trim(); if(raiseStr==='') return false; if(+raiseStr<=0) return false;
+  const maxRaise = priceVal*0.49; if(+raiseStr>maxRaise) return false;
   const imgStr = (q('a-img')||'').trim(); if(!imgStr) return false; if(!/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')) return false;
   const descStr = (q('a-desc')||'').trim(); if(!descStr) return false;
   return true;
 }
-function updateAddButtonState(){
-  const btn = document.getElementById('a-add'); if(!btn) return;
-  const ok = isAdminFormValid();
-  btn.disabled = !ok;
-  btn.setAttribute('aria-disabled', String(!ok));
-}
 function renderAdminTable(){
   const tb=document.getElementById("a-tbody"); tb.innerHTML="";
-  listings.forEach(p=>{
-    const tr=document.createElement("tr");
-    tr.dataset.id = p.id;
-    if (editingId && editingId === p.id) tr.classList.add('editing');
-    const isEditing = editingId && editingId === p.id;
   const lang = localStorage.getItem('lang') || 'en';
-  const editBtn = isEditing
-    ? `<button data-id="${p.id}" data-action="cancel" title="${I18N[lang].cancel_edit}" aria-label="${I18N[lang].cancel_edit}">\u2715</button>`
-    : `<button data-id="${p.id}" data-action="edit" title="${I18N[lang].edit}" aria-label="${I18N[lang].edit}" class="icon-btn">\u270f\ufe0f</button>`;
-  tr.innerHTML=`<td class=\"row-action\">${editBtn}</td><td>${p.address}</td><td>${formatMoney(p.price)}</td><td>${formatMoney(p.totalRaise)}</td><td>${formatMoney(p.availableRaise)}</td><td style=\"display:flex;gap:8px\"><button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">${I18N[lang].remove}</button></td>`;
-    tb.appendChild(tr);
+  listings.forEach(p=>{
+    const main=document.createElement('tr');
+    main.dataset.id = p.id;
+    if (editingId && editingId === p.id) main.classList.add('editing');
+    const isEditing = editingId && editingId === p.id;
+    const editBtn = isEditing
+      ? `<button data-id="${p.id}" data-action="cancel" title="${I18N[lang].cancel_edit}" aria-label="${I18N[lang].cancel_edit}">\u2715</button>`
+      : `<button data-id="${p.id}" data-action="edit" title="${I18N[lang].edit}" aria-label="${I18N[lang].edit}" class="icon-btn">\u270f\ufe0f</button>`;
+    const invs = Array.isArray(p.investments) ? p.investments : [];
+    const hasInv = invs.length > 0;
+    const subId = `subrow-${p.id}`;
+    const toggle = hasInv ? `<button class="secondary" data-id="${p.id}" data-action="toggle-sub" aria-expanded="false" aria-controls="${subId}">${I18N[lang].submissions_toggle}</button>` : `<span class=\"muted\">${I18N[lang].no_submissions}</span>`;
+    const committed = (Array.isArray(p.investments) && p.investments.length)
+      ? p.investments.reduce((s,x)=> s + ((x.status==='approved')?(+x.amount||0):0), 0)
+      : ((+p.totalRaise||0) - (+p.availableRaise||0));
+    const capMax = Math.max(0, Math.floor((+p.price||0) * 0.49));
+    const actualAvail = Math.max(0, capMax - committed);
+    main.innerHTML = `
+      <td class=\"row-action\">${editBtn}</td>
+      <td><div style=\"display:flex;align-items:center;gap:8px\"><span>${p.address}</span>${toggle}</div></td>
+      <td>${formatMoney(p.price)}</td>
+  <td>${formatMoney(p.totalRaise)}</td>
+  <td>${formatMoney(actualAvail)}</td>
+  <td style=\"display:flex;gap:8px\"><button class=\"danger\" data-id=\"${p.id}\" data-action=\"remove\">${I18N[lang].remove}</button></td>`;
+    tb.appendChild(main);
+
+    // Submissions detail row under full width
+    const sub=document.createElement('tr');
+    sub.id = subId; sub.className='sub-row'; sub.style.display='none';
+  const cell=document.createElement('td'); cell.colSpan=6;
+    const box=document.createElement('div'); box.className='sub-box'; box.setAttribute('role','region'); box.setAttribute('aria-label', I18N[lang].submissions_label);
+    if(hasInv){
+      box.innerHTML = `
+        <table>
+          <thead>
+            <tr class=\"muted\"><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_name}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_email}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_phone}</th><th style=\"text-align:right;padding:4px 6px\">${I18N[lang].s_amount}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_time}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_status||'Status'}</th><th style=\"text-align:left;padding:4px 6px\">${I18N[lang].s_actions||'Actions'}</th></tr>
+          </thead>
+          <tbody>
+            ${invs.map((x,i)=>`<tr data-inv-index=\"${i}\">\n              <td style=\"padding:4px 6px\">${(x.name||'—')}</td>\n              <td style=\"padding:4px 6px\">${(x.email||'—')}</td>\n              <td style=\"padding:4px 6px\">${(x.phone||'—')}</td>\n              <td style=\"padding:4px 6px;text-align:right\">${formatMoney(+x.amount||0)}</td>\n              <td style=\"padding:4px 6px\">${new Date(x.ts||Date.now()).toLocaleString()}</td>\n              <td style=\"padding:4px 6px\">${x.status==='approved' ? (I18N[lang].status_approved||'Approved') : (I18N[lang].status_pending||'Pending')}</td>\n              <td style=\"padding:4px 6px\">${x.status==='approved' ? '' : `<button data-id='${p.id}' data-action='approve' data-index='${i}'>${I18N[lang].approve||'Approve'}</button>`}</td>\n            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    } else {
+      box.textContent = '';
+    }
+    cell.appendChild(box); sub.appendChild(cell); tb.appendChild(sub);
   });
 }
 function applyHighlight(){
@@ -202,6 +260,11 @@ function fillForm(p){
   set('a-raise', p.totalRaise);
   set('a-img', p.image);
   set('a-desc', p.description);
+  // Compute Actual Available
+  const committed = (Array.isArray(p.investments) && p.investments.length) ? p.investments.reduce((s,x)=> s + ((x.status==='approved')?(+x.amount||0):0), 0) : 0;
+  const capMax = Math.max(0, Math.floor((+p.price||0) * 0.49));
+  const actual = Math.max(0, capMax - committed);
+  const actualEl = document.getElementById('a-actual'); if(actualEl) actualEl.value = actual;
   // Update button state after programmatic fill
   updateAddButtonState();
 }
@@ -252,6 +315,13 @@ document.getElementById("a-add").onclick=()=>{
   const bathsStr = (fs.baths?.value||'').trim(); if(bathsStr===''){ aErr(I18N[lang].a_err_baths_required, fs.baths); return; } if(+bathsStr<0){ aErr(I18N[lang].a_err_baths_nonneg, fs.baths); return; }
   const sqftStr = (fs.sqft?.value||'').trim(); if(sqftStr===''){ aErr(I18N[lang].a_err_sqft_required, fs.sqft); return; } if(+sqftStr<0){ aErr(I18N[lang].a_err_sqft_nonneg, fs.sqft); return; }
   const raiseStr = (fs.raise?.value||'').trim(); if(raiseStr===''){ aErr(I18N[lang].a_err_raise_required, fs.raise); return; } if(+raiseStr<=0){ aErr(I18N[lang].a_err_raise_gt0, fs.raise); return; }
+  const maxRaise = priceVal*0.49;
+  if(+raiseStr>maxRaise){ aErr((I18N[lang].a_err_raise_max49||`Total Raise cannot exceed 49% of Price (max ${formatMoney(maxRaise)})`), fs.raise); return; }
+  const availStr = (fs.img && document.getElementById('a-available') ? document.getElementById('a-available').value : (''+''));
+  const availVal = +(availStr||'');
+  if(isNaN(availVal)){ aErr((I18N[lang].a_err_available_required||'Available Raise is required'), document.getElementById('a-available')); return; }
+  if(availVal<0){ aErr((I18N[lang].a_err_available_nonneg||'Available Raise must be ≥ 0'), document.getElementById('a-available')); return; }
+  if(availVal>+raiseStr){ aErr((I18N[lang].a_err_available_lte_raise||'Available Raise cannot exceed Total Raise'), document.getElementById('a-available')); return; }
   const imgStr = (fs.img?.value||'').trim();
   if(!imgStr){ aErr(I18N[lang].a_err_img_required, fs.img); return; }
   if(!/^https?:\/\//i.test(imgStr) && !imgStr.startsWith('data:')){ aErr(I18N[lang].a_err_img_format, fs.img); return; }
@@ -261,14 +331,12 @@ document.getElementById("a-add").onclick=()=>{
   const price=priceVal, raise=+(raiseStr||0);
   if(editingId){
     const idx=listings.findIndex(x=>x.id===editingId); if(idx<0) return;
-  let available = listings[idx].availableRaise;
   const newTotal = raise;
-    if(available > newTotal) available = newTotal;
     const updated={
       ...listings[idx],
       address:g('a-address'), type:g('a-type'), price,
       capRate:+g('a-cap')||null, beds:+g('a-beds')||0, baths:+g('a-baths')||0, sqft:+g('a-sqft')||0,
-      totalRaise:newTotal, availableRaise:available, image:g('a-img'), description:g('a-desc')
+  totalRaise:newTotal, image:g('a-img'), description:g('a-desc')
     };
   listings[idx]=updated; saveMockListings(listings); renderAdminTable();
   const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
@@ -277,8 +345,8 @@ document.getElementById("a-add").onclick=()=>{
     const id="P-"+Math.random().toString(36).slice(2,7).toUpperCase();
   const p={id,ts:Date.now(),address:g("a-address"),type:g("a-type"),price,
              beds:+g("a-beds")||0,baths:+g("a-baths")||0,sqft:+g("a-sqft")||0,
-       capRate:+g("a-cap")||null,totalRaise:raise,
-       availableRaise:raise,image:g("a-img"),
+  capRate:+g("a-cap")||null,totalRaise:raise,
+  image:g("a-img"),
              description:g("a-desc"),sourceUrl:"#"};
   listings.unshift(p); saveMockListings(listings); renderAdminTable();
   const noteOK=document.getElementById('a-notice'); if(noteOK){ noteOK.style.display='none'; noteOK.textContent=''; }
@@ -290,6 +358,29 @@ function clearAdminFieldError(el){ if(!el) return; el.classList.remove('error');
 ["a-address","a-type","a-price","a-cap","a-beds","a-baths","a-sqft","a-raise","a-img","a-desc"].forEach(id=>{
   const el=document.getElementById(id); if(!el) return; const evt = el.tagName === 'SELECT' ? 'change' : 'input';
   el.addEventListener(evt, ()=>{ clearAdminFieldError(el); updateAddButtonState(); });
+});
+// Keep business rules in sync while editing: raise <= 49% of price; available in [0, raise]
+function enforceBusinessRules(){
+  const priceEl=document.getElementById('a-price');
+  const raiseEl=document.getElementById('a-raise');
+  const actualEl=document.getElementById('a-actual');
+  if(!priceEl||!raiseEl) return;
+  const price=+priceEl.value||0;
+  const maxRaise=price*0.49;
+  if(+raiseEl.value>maxRaise){ raiseEl.value = Math.floor(maxRaise); }
+  // Update Actual Available live (based on current listing context if editing)
+  try{
+    const id = editingId;
+    const p = id ? listings.find(x=>x.id===id) : null;
+    const committed = p ? ((Array.isArray(p.investments) && p.investments.length) ? p.investments.reduce((s,x)=> s + ((x.status==='approved')?(+x.amount||0):0), 0) : 0) : 0;
+    const capMaxNow = Math.max(0, Math.floor((+priceEl.value||0) * 0.49));
+    const actualNow = Math.max(0, capMaxNow - committed);
+    if(actualEl) actualEl.value = actualNow;
+  }catch(e){}
+}
+['a-price','a-raise'].forEach(id=>{
+  const el=document.getElementById(id); if(!el) return;
+  el.addEventListener('input', ()=>{ enforceBusinessRules(); updateAddButtonState(); });
 });
 function openAdminModal(){ const m=document.getElementById('a-modal'); if(!m) return; m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; setTimeout(()=>{ const first=document.getElementById('a-address'); if(first) first.focus(); }, 30); }
 function closeAdminModal(){ const m=document.getElementById('a-modal'); if(!m) return; m.classList.remove('open'); m.setAttribute('aria-hidden','true'); document.body.style.overflow=''; exitEdit(); }
@@ -304,6 +395,32 @@ document.getElementById("a-tbody").addEventListener("click",e=>{
   if(!actBtn) return;
   const id=actBtn.getAttribute("data-id");
   const action=actBtn.getAttribute("data-action");
+  if(action==='toggle-sub'){
+    const region = document.getElementById(`subrow-${id}`);
+    if(region){
+      const nowOpen = region.style.display === 'none';
+      region.style.display = nowOpen ? 'table-row' : 'none';
+      actBtn.setAttribute('aria-expanded', String(nowOpen));
+      actBtn.textContent = nowOpen ? (I18N[(localStorage.getItem('lang')||'en')].submissions_hide) : (I18N[(localStorage.getItem('lang')||'en')].submissions_toggle);
+    }
+    return;
+  }
+  if(action==='approve'){
+    const idx = listings.findIndex(x=>x.id===id); if(idx<0) return;
+    const invIndex = +actBtn.getAttribute('data-index');
+    const p = listings[idx];
+    if(Array.isArray(p.investments) && p.investments[invIndex]){
+      p.investments[invIndex].status = 'approved';
+      // Recompute committed from approved only, sync legacy fields
+      const committed = p.investments.reduce((s,x)=> s + ((x.status==='approved')?(+x.amount||0):0), 0);
+      p.totalRaise = committed;
+      const capMax = Math.max(0, Math.floor((+p.price||0) * 0.49));
+      const actualAvail = Math.max(0, capMax - committed);
+      saveMockListings(listings);
+      renderAdminTable();
+    }
+    return;
+  }
   if(action==='remove'){
     const it = listings.find(x=>x.id===id);
     const addr = it && it.address ? it.address : id;

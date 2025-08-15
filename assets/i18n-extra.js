@@ -82,7 +82,28 @@
   // Invest limits
   fully_invested:"Fully invested",
   only_available:"Only {amt} available",
-  err_max_amount_tmpl:"Maximum investment is {max}"
+      err_max_amount_tmpl:"Maximum investment is {max}",
+      // Admin submissions
+      submissions_toggle:"View submissions",
+      submissions_hide:"Hide submissions",
+      submissions_label:"Investor submissions",
+      no_submissions:"No submissions yet",
+      s_name:"Name",
+      s_email:"Email",
+      s_phone:"Phone",
+      s_amount:"Amount",
+      s_time:"Submitted",
+      // Actual Available labels
+      t_actual_available:"Actual Available",
+      a_actual_available:"Actual Available ($)",
+      a_actual_hint:"Auto: 49% of Price minus committed",
+      // Approval workflow
+      amount_pending:"Amount pending",
+      s_status:"Status",
+      s_actions:"Actions",
+      approve:"Approve",
+      status_pending:"Pending",
+      status_approved:"Approved"
       },
       vi:{
   // Placeholders and labels
@@ -164,7 +185,28 @@
   // Invest limits
   fully_invested:"Đã hết suất đầu tư",
   only_available:"Chỉ còn {amt}",
-  err_max_amount_tmpl:"Khoản đầu tư tối đa là {max}"
+      err_max_amount_tmpl:"Khoản đầu tư tối đa là {max}",
+      // Admin submissions
+      submissions_toggle:"Xem đăng ký",
+      submissions_hide:"Ẩn đăng ký",
+      submissions_label:"Đăng ký của nhà đầu tư",
+      no_submissions:"Chưa có đăng ký",
+      s_name:"Tên",
+      s_email:"Email",
+      s_phone:"Điện thoại",
+      s_amount:"Số tiền",
+      s_time:"Thời gian",
+      // Actual Available labels
+      t_actual_available:"Số dư khả dụng thực tế",
+      a_actual_available:"Số dư khả dụng thực tế ($)",
+      a_actual_hint:"Tự tính: 49% Giá trừ phần đã cam kết",
+      // Approval workflow
+      amount_pending:"Số tiền đang chờ",
+      s_status:"Trạng thái",
+      s_actions:"Thao tác",
+      approve:"Duyệt",
+      status_pending:"Đang chờ",
+      status_approved:"Đã duyệt"
       }
     };
     if(typeof I18N==='object'){
