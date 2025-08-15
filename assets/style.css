@@ -88,8 +88,10 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 .table th{font-size:.9rem;color:#475569}
 .table tr.editing{background:#fff8e1}
 /* Compact left action column for edit icon */
-.table .row-action{width:36px;white-space:nowrap}
+.table .row-action{width:44px;white-space:nowrap}
 .table .row-action button{padding:6px 8px}
+.icon-btn{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:#fff}
+.icon-btn:hover{background:#eef5ff;border-color:#cfe0ff}
 /* Make tables horizontally scrollable on small screens */
 @media (max-width:720px){
   .table{display:block;overflow-x:auto;white-space:nowrap}
