@@ -68,7 +68,11 @@
         undo:"Undo",
   trash_empty_confirm:"Empty trash permanently?",
   // Confirm templates
-  a_confirm_remove:"Remove this listing?\n{addr}"
+  a_confirm_remove:"Remove this listing?\n{addr}",
+  // SW update toast
+  sw_update_available:"New version available",
+  sw_refresh:"Refresh",
+  sw_dismiss:"Dismiss"
       },
       vi:{
   // Placeholders and labels
@@ -136,7 +140,11 @@
         undo:"Hoàn tác",
   trash_empty_confirm:"Dọn thùng rác vĩnh viễn?",
   // Confirm templates
-  a_confirm_remove:"Xóa dự án này?\n{addr}"
+  a_confirm_remove:"Xóa dự án này?\n{addr}",
+  // SW update toast
+  sw_update_available:"Có phiên bản mới",
+  sw_refresh:"Tải lại",
+  sw_dismiss:"Đóng"
       }
     };
     if(typeof I18N==='object'){
