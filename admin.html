@@ -272,13 +272,27 @@ renderTrashTable();
   window.__dreInitPlaces = function(){
     const input=document.getElementById('a-address'); if(!input || !window.google || !google.maps || !google.maps.places) return;
     try{
+      const country = window.GOOGLE_PLACES_COUNTRY || 'us';
       const ac = new google.maps.places.Autocomplete(input, {
         types: ['address'],
-        fields: ['address_components','formatted_address']
+        fields: ['address_components','formatted_address'],
+        componentRestrictions: country ? { country } : undefined
       });
       ac.addListener('place_changed', ()=>{
         const place = ac.getPlace();
-        if(place && place.formatted_address){ input.value = place.formatted_address; clearAdminFieldError && clearAdminFieldError(input); }
+        if(place && place.formatted_address){
+          input.value = place.formatted_address;
+          clearAdminFieldError && clearAdminFieldError(input);
+          const comps = place.address_components || [];
+          const getLong = (t)=>{ const c = comps.find(x=>x.types && x.types.indexOf(t)>=0); return c? c.long_name: ''; };
+          const getShort = (t)=>{ const c = comps.find(x=>x.types && x.types.indexOf(t)>=0); return c? c.short_name: ''; };
+          const city = getLong('locality') || getLong('sublocality') || getLong('postal_town');
+          const state = getShort('administrative_area_level_1');
+          const zip = getLong('postal_code');
+          const cityEl = document.getElementById('a-city'); if(cityEl){ cityEl.value = city; clearAdminFieldError && clearAdminFieldError(cityEl); }
+          const stateEl = document.getElementById('a-state'); if(stateEl){ stateEl.value = state; clearAdminFieldError && clearAdminFieldError(stateEl); }
+          const zipEl = document.getElementById('a-zip'); if(zipEl){ zipEl.value = zip; clearAdminFieldError && clearAdminFieldError(zipEl); }
+        }
       });
     }catch(e){ /* fail silently */ }
   };
