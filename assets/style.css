@@ -114,3 +114,17 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
   background: #fff6f6;
   box-shadow: inset 0 0 0 2px rgba(239,68,68,.12);
 }
+
+/* Tighter paddings on small screens */
+@media (max-width: 720px){
+  :root{ --pad:12px; --padlg:16px }
+  .nav{ padding:10px var(--pad); gap:12px }
+  nav a{ padding:8px 10px }
+  .card{ padding: var(--pad) }
+  .grid{ gap:14px }
+  .row, .row-2, .row-4{ gap:10px }
+  .table th, .table td{ padding:8px }
+  .hero{ padding: clamp(12px, 2vw, 18px) }
+  footer{ margin:28px auto }
+  footer .foot{ padding:14px 0 }
+}
