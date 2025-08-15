@@ -124,6 +124,9 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
   .grid{ gap:14px }
   .row, .row-2, .row-4{ gap:10px }
   .table th, .table td{ padding:8px }
+  /* Denser table text on phones */
+  .table td{ font-size:.88rem; line-height:1.35 }
+  .table th{ font-size:.82rem }
   .hero{ padding: clamp(12px, 2vw, 18px) }
   /* Slightly smaller headings for phones */
   .hero h1{ font-size: clamp(24px, 5.2vw, 36px) }
