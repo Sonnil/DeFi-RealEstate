@@ -78,7 +78,11 @@
   info_price_label:"What is Price?",
   info_price:"The estimated purchase price or offering price for the property.",
   info_cap_label:"What is Cap Rate?",
-  info_cap:"Cap rate = Net Operating Income (NOI) ÷ Purchase Price. Rough annual yield before financing and taxes."
+  info_cap:"Cap rate = Net Operating Income (NOI) ÷ Purchase Price. Rough annual yield before financing and taxes.",
+  // Invest limits
+  fully_invested:"Fully invested",
+  only_available:"Only {amt} available",
+  err_max_amount_tmpl:"Maximum investment is {max}"
       },
       vi:{
   // Placeholders and labels
@@ -156,7 +160,11 @@
   info_price_label:"Giá là gì?",
   info_price:"Giá mua ước tính hoặc giá chào bán của bất động sản.",
   info_cap_label:"Tỷ suất vốn hóa là gì?",
-  info_cap:"Tỷ suất vốn hóa = Thu nhập hoạt động ròng (NOI) ÷ Giá mua. Ước tính lợi suất hàng năm trước tài trợ và thuế."
+  info_cap:"Tỷ suất vốn hóa = Thu nhập hoạt động ròng (NOI) ÷ Giá mua. Ước tính lợi suất hàng năm trước tài trợ và thuế.",
+  // Invest limits
+  fully_invested:"Đã hết suất đầu tư",
+  only_available:"Chỉ còn {amt}",
+  err_max_amount_tmpl:"Khoản đầu tư tối đa là {max}"
       }
     };
     if(typeof I18N==='object'){

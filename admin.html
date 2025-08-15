@@ -27,6 +27,12 @@
   @media (max-width:720px){ main{padding:12px} }
   .icon-btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 2px}
   .icon-btn:hover{color:#fff}
+  /* Tooltip bubble */
+  .tooltip{position:relative;display:inline-block}
+  .tooltip .tip{position:absolute;z-index:1000;left:50%;transform:translateX(-50%);bottom:125%;background:#0e1526;color:#e9eef5;border:1px solid #2a3550;border-radius:8px;padding:8px 10px;white-space:normal;font-size:12px;line-height:1.3;min-width:180px;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .12s ease,transform .12s ease}
+  .tooltip .tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:6px;border-style:solid;border-color:#0e1526 transparent transparent transparent}
+  .tooltip:hover .tip,.tooltip:focus-within .tip{opacity:1;pointer-events:auto;transform:translate(-50%,-2px)}
+  .tooltip .tip [role="heading"]{font-weight:600;margin:0 0 4px}
 </style>
 <link rel="preload" href="assets/style.min.css?v=4" as="style">
 <link rel="stylesheet" href="assets/style.min.css?v=4" media="print" onload="this.media='all'">
@@ -79,8 +85,20 @@
     <div class="two-col">
       <div class="field"><label data-i18n="a_address">Address</label><input id="a-address" placeholder="123 Palm Ave, Orlando, FL" autocomplete="street-address" required></div>
       <div class="field"><label data-i18n="a_type">Type</label><select id="a-type" required><option>Single Family</option><option>Condo</option><option>Townhome</option></select></div>
-  <div class="field"><label data-i18n="a_price">Price ($)</label> <button type="button" class="icon-btn" aria-label="What is Price?" data-i18n-aria-label="info_price_label" title="What is Price?" data-i18n-title="info_price">ℹ️</button><input id="a-price" type="number" step="1000" min="0" required></div>
-  <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label> <button type="button" class="icon-btn" aria-label="What is Cap Rate?" data-i18n-aria-label="info_cap_label" title="What is Cap Rate?" data-i18n-title="info_cap">ℹ️</button><input id="a-cap" type="number" step="0.1" min="0" max="100" value="5.5" required></div>
+      <div class="field"><label data-i18n="a_price">Price ($)</label> 
+        <span class="tooltip">
+          <button type="button" class="icon-btn" aria-label="What is Price?" data-i18n-aria-label="info_price_label">ℹ️</button>
+          <span class="tip" role="tooltip"><span role="heading" data-i18n="info_price_label">What is Price?</span><span data-i18n="info_price">The estimated purchase price or offering price for the property.</span></span>
+        </span>
+        <input id="a-price" type="number" step="1000" min="0" required>
+      </div>
+      <div class="field"><label data-i18n="a_cap">Cap Rate (%)</label>
+        <span class="tooltip">
+          <button type="button" class="icon-btn" aria-label="What is Cap Rate?" data-i18n-aria-label="info_cap_label">ℹ️</button>
+          <span class="tip" role="tooltip"><span role="heading" data-i18n="info_cap_label">What is Cap Rate?</span><span data-i18n="info_cap">Cap rate = Net Operating Income (NOI) ÷ Purchase Price. Rough annual yield before financing and taxes.</span></span>
+        </span>
+        <input id="a-cap" type="number" step="0.1" min="0" max="100" value="5.5" required>
+      </div>
       <div class="field"><label data-i18n="a_beds">Beds</label><input id="a-beds" type="number" step="1" min="0" required></div>
       <div class="field"><label data-i18n="a_baths">Baths</label><input id="a-baths" type="number" step="1" min="0" required></div>
       <div class="field"><label data-i18n="a_sqft">Sqft</label><input id="a-sqft" type="number" step="50" min="0" required></div>
